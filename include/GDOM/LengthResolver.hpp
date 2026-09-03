@@ -22,6 +22,14 @@ namespace gdom
     static bool endsWith(
         const std::string &value,
         const std::string &suffix);
+
+    static float resolveSingle(
+        const std::string &value,
+        float referenceSize);
+
+    static float resolveCalc(
+        const std::string &value,
+        float referenceSize);
   };
 
 }

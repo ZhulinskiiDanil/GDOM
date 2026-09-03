@@ -57,6 +57,13 @@ namespace gdom
         void appendChild(
             HTMLElement *child);
 
+        bool removeChild(
+            HTMLElement *child);
+
+        bool replaceChild(
+            HTMLElement *newChild,
+            HTMLElement *oldChild);
+
         HTMLElement *
         getParentElement() const;
 
@@ -138,6 +145,11 @@ namespace gdom
 
         CCNode *finishRender(
             CCNode *node);
+
+        void clearRenderedStateRecursive();
+
+        bool wouldCreateCycle(
+            HTMLElement *child) const;
 
         HTMLElement *
             m_parentElement =

@@ -60,7 +60,8 @@ namespace gdom
   bool LengthResolver::isAuto(
       const std::string &rawValue)
   {
-    return trim(rawValue) == "auto";
+    return trim(rawValue) ==
+           "auto";
   }
 
   float LengthResolver::resolve(
@@ -70,8 +71,36 @@ namespace gdom
     const auto value =
         trim(rawValue);
 
-    if (value.empty() ||
+    if (
+        value.empty() ||
         value == "auto")
+    {
+      return 0.f;
+    }
+
+    if (
+        value.size() >= 6 &&
+        value.starts_with("calc(") &&
+        value.ends_with(")"))
+    {
+      return resolveCalc(
+          value,
+          referenceSize);
+    }
+
+    return resolveSingle(
+        value,
+        referenceSize);
+  }
+
+  float LengthResolver::resolveSingle(
+      const std::string &rawValue,
+      float referenceSize)
+  {
+    const auto value =
+        trim(rawValue);
+
+    if (value.empty())
     {
       return 0.f;
     }
@@ -82,14 +111,20 @@ namespace gdom
     float multiplier =
         1.f;
 
-    if (endsWith(value, "px"))
+    if (
+        endsWith(
+            value,
+            "px"))
     {
       numberPart =
           value.substr(
               0,
               value.size() - 2);
     }
-    else if (endsWith(value, "rem"))
+    else if (
+        endsWith(
+            value,
+            "rem"))
     {
       numberPart =
           value.substr(
@@ -99,7 +134,10 @@ namespace gdom
       multiplier =
           10.f;
     }
-    else if (endsWith(value, "%"))
+    else if (
+        endsWith(
+            value,
+            "%"))
     {
       numberPart =
           value.substr(
@@ -107,12 +145,14 @@ namespace gdom
               value.size() - 1);
 
       multiplier =
-          referenceSize / 100.f;
+          referenceSize /
+          100.f;
     }
 
     auto number =
         numFromString<float>(
-            trim(numberPart));
+            trim(
+                numberPart));
 
     if (number.isErr())
     {
@@ -125,6 +165,104 @@ namespace gdom
 
     return number.unwrap() *
            multiplier;
+  }
+
+  float LengthResolver::resolveCalc(
+      const std::string &rawValue,
+      float referenceSize)
+  {
+    auto expression =
+        trim(
+            rawValue.substr(
+                5,
+                rawValue.size() - 6));
+
+    if (expression.empty())
+    {
+      log::warn(
+          "GDOM: empty calc expression '{}'",
+          rawValue);
+
+      return 0.f;
+    }
+
+    std::size_t operatorPosition =
+        std::string::npos;
+
+    char operation =
+        '\0';
+
+    for (
+        std::size_t i = 1;
+        i < expression.size();
+        ++i)
+    {
+      const char c =
+          expression[i];
+
+      if (
+          c == '+' ||
+          c == '-')
+      {
+        operatorPosition =
+            i;
+
+        operation =
+            c;
+
+        break;
+      }
+    }
+
+    if (
+        operatorPosition ==
+        std::string::npos)
+    {
+      return resolveSingle(
+          expression,
+          referenceSize);
+    }
+
+    const auto leftPart =
+        trim(
+            expression.substr(
+                0,
+                operatorPosition));
+
+    const auto rightPart =
+        trim(
+            expression.substr(
+                operatorPosition + 1));
+
+    if (
+        leftPart.empty() ||
+        rightPart.empty())
+    {
+      log::warn(
+          "GDOM: invalid calc expression '{}'",
+          rawValue);
+
+      return 0.f;
+    }
+
+    const float left =
+        resolveSingle(
+            leftPart,
+            referenceSize);
+
+    const float right =
+        resolveSingle(
+            rightPart,
+            referenceSize);
+
+    if (operation == '+')
+    {
+      return left +
+             right;
+    }
+
+    return left -
+           right;
   }
 
 }

@@ -95,6 +95,21 @@ namespace gdom
       return;
     }
 
+    if (element->m_parentElement)
+    {
+      element->m_parentElement
+          ->removeChild(
+              element);
+    }
+    else if (
+        element->m_document &&
+        element->m_document != this)
+    {
+      element->m_document
+          ->removeChild(
+              element);
+    }
+
     element->m_parentElement =
         nullptr;
 
@@ -105,6 +120,157 @@ namespace gdom
         element);
 
     requestUpdate();
+  }
+
+  bool GDOMDocument::removeChild(
+      HTMLElement *element)
+  {
+    if (!element)
+    {
+      return false;
+    }
+
+    const auto iterator =
+        std::find(
+            m_children.begin(),
+            m_children.end(),
+            element);
+
+    if (
+        iterator ==
+        m_children.end())
+    {
+      return false;
+    }
+
+    auto *renderedNode =
+        element->getRenderedNode();
+
+    if (
+        renderedNode &&
+        renderedNode->getParent())
+    {
+      renderedNode
+          ->removeFromParentAndCleanup(
+              true);
+    }
+
+    m_children.erase(
+        iterator);
+
+    element->m_parentElement =
+        nullptr;
+
+    element->setDocument(
+        nullptr);
+
+    element
+        ->clearRenderedStateRecursive();
+
+    element
+        ->resetResolvedSizeRecursive();
+
+    requestUpdate();
+
+    return true;
+  }
+
+  bool GDOMDocument::replaceChild(
+      HTMLElement *newElement,
+      HTMLElement *oldElement)
+  {
+    if (
+        !newElement ||
+        !oldElement)
+    {
+      return false;
+    }
+
+    if (newElement == oldElement)
+    {
+      return
+          std::find(
+              m_children.begin(),
+              m_children.end(),
+              oldElement) !=
+          m_children.end();
+    }
+
+    auto oldIterator =
+        std::find(
+            m_children.begin(),
+            m_children.end(),
+            oldElement);
+
+    if (
+        oldIterator ==
+        m_children.end())
+    {
+      return false;
+    }
+
+    if (newElement->m_parentElement)
+    {
+      newElement->m_parentElement
+          ->removeChild(
+              newElement);
+    }
+    else if (newElement->m_document)
+    {
+      newElement->m_document
+          ->removeChild(
+              newElement);
+    }
+
+    oldIterator =
+        std::find(
+            m_children.begin(),
+            m_children.end(),
+            oldElement);
+
+    if (
+        oldIterator ==
+        m_children.end())
+    {
+      return false;
+    }
+
+    auto *oldRenderedNode =
+        oldElement->getRenderedNode();
+
+    if (
+        oldRenderedNode &&
+        oldRenderedNode->getParent())
+    {
+      oldRenderedNode
+          ->removeFromParentAndCleanup(
+              true);
+    }
+
+    oldElement->m_parentElement =
+        nullptr;
+
+    oldElement->setDocument(
+        nullptr);
+
+    oldElement
+        ->clearRenderedStateRecursive();
+
+    oldElement
+        ->resetResolvedSizeRecursive();
+
+    newElement->m_parentElement =
+        nullptr;
+
+    newElement->setDocument(
+        this);
+
+    *oldIterator =
+        newElement;
+
+    requestUpdate();
+
+    return true;
   }
 
   void GDOMDocument::requestUpdate()
@@ -647,6 +813,9 @@ namespace gdom
             ->removeFromParentAndCleanup(
                 true);
       }
+
+      element
+          ->clearRenderedStateRecursive();
     }
   }
 
@@ -666,7 +835,9 @@ namespace gdom
     for (auto *element :
          m_children)
     {
-      if (!element)
+      if (
+          !element ||
+          element->style.display == "none")
       {
         continue;
       }

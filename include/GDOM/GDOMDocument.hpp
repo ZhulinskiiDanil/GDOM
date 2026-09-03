@@ -24,6 +24,13 @@ namespace gdom
         void appendChild(
             HTMLElement *element);
 
+        bool removeChild(
+            HTMLElement *element);
+
+        bool replaceChild(
+            HTMLElement *newElement,
+            HTMLElement *oldElement);
+
         void render();
 
         void update();

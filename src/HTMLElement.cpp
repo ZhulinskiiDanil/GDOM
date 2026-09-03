@@ -35,11 +35,64 @@ namespace gdom
             invalidateCallback);
     }
 
+    bool HTMLElement::wouldCreateCycle(
+        HTMLElement *child) const
+    {
+        if (!child)
+        {
+            return false;
+        }
+
+        for (
+            auto *current =
+                const_cast<HTMLElement *>(this);
+            current;
+            current =
+                current->m_parentElement)
+        {
+            if (current == child)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    void HTMLElement::clearRenderedStateRecursive()
+    {
+        m_renderedNode =
+            nullptr;
+
+        m_mounted =
+            false;
+
+        for (auto *child :
+             m_children)
+        {
+            if (child)
+            {
+                child
+                    ->clearRenderedStateRecursive();
+            }
+        }
+    }
+
     void HTMLElement::appendChild(
         HTMLElement *child)
     {
         if (!child)
         {
+            return;
+        }
+
+        if (
+            child == this ||
+            wouldCreateCycle(child))
+        {
+            log::warn(
+                "GDOM: appendChild would create a cycle");
+
             return;
         }
 
@@ -53,15 +106,17 @@ namespace gdom
             return;
         }
 
-        if (
-            child->m_parentElement &&
-            child->m_parentElement != this)
+        if (child->m_parentElement)
         {
-            log::warn(
-                "GDOM: attempted to append an element "
-                "that already has a parent");
-
-            return;
+            child->m_parentElement
+                ->removeChild(
+                    child);
+        }
+        else if (child->m_document)
+        {
+            child->m_document
+                ->removeChild(
+                    child);
         }
 
         child->m_parentElement =
@@ -74,6 +129,167 @@ namespace gdom
             child);
 
         invalidateTree();
+    }
+
+    bool HTMLElement::removeChild(
+        HTMLElement *child)
+    {
+        if (!child)
+        {
+            return false;
+        }
+
+        const auto iterator =
+            std::find(
+                m_children.begin(),
+                m_children.end(),
+                child);
+
+        if (
+            iterator ==
+            m_children.end())
+        {
+            return false;
+        }
+
+        auto *renderedNode =
+            child->getRenderedNode();
+
+        if (
+            renderedNode &&
+            renderedNode->getParent())
+        {
+            renderedNode
+                ->removeFromParentAndCleanup(
+                    true);
+        }
+
+        m_children.erase(
+            iterator);
+
+        child->m_parentElement =
+            nullptr;
+
+        child->setDocument(
+            nullptr);
+
+        child
+            ->clearRenderedStateRecursive();
+
+        child
+            ->resetResolvedSizeRecursive();
+
+        invalidateTree();
+
+        return true;
+    }
+
+    bool HTMLElement::replaceChild(
+        HTMLElement *newChild,
+        HTMLElement *oldChild)
+    {
+        if (
+            !newChild ||
+            !oldChild)
+        {
+            return false;
+        }
+
+        if (newChild == oldChild)
+        {
+            return std::find(
+                       m_children.begin(),
+                       m_children.end(),
+                       oldChild) !=
+                   m_children.end();
+        }
+
+        if (
+            newChild == this ||
+            wouldCreateCycle(
+                newChild))
+        {
+            log::warn(
+                "GDOM: replaceChild would create a cycle");
+
+            return false;
+        }
+
+        auto oldIterator =
+            std::find(
+                m_children.begin(),
+                m_children.end(),
+                oldChild);
+
+        if (
+            oldIterator ==
+            m_children.end())
+        {
+            return false;
+        }
+
+        if (newChild->m_parentElement)
+        {
+            newChild->m_parentElement
+                ->removeChild(
+                    newChild);
+        }
+        else if (newChild->m_document)
+        {
+            newChild->m_document
+                ->removeChild(
+                    newChild);
+        }
+
+        oldIterator =
+            std::find(
+                m_children.begin(),
+                m_children.end(),
+                oldChild);
+
+        if (
+            oldIterator ==
+            m_children.end())
+        {
+            return false;
+        }
+
+        auto *oldRenderedNode =
+            oldChild->getRenderedNode();
+
+        if (
+            oldRenderedNode &&
+            oldRenderedNode->getParent())
+        {
+            oldRenderedNode
+                ->removeFromParentAndCleanup(
+                    true);
+        }
+
+        oldChild->m_parentElement =
+            nullptr;
+
+        oldChild->setDocument(
+            nullptr);
+
+        oldChild
+            ->clearRenderedStateRecursive();
+
+        oldChild
+            ->resetResolvedSizeRecursive();
+
+        newChild->m_parentElement =
+            this;
+
+        newChild->setDocument(
+            m_document);
+
+        *oldIterator =
+            newChild;
+
+        invalidateTree();
+
+        return true;
     }
 
     HTMLElement *

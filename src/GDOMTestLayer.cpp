@@ -153,11 +153,16 @@ void GDOMTestLayer::buildTestUI()
 
     root->style.left = "30px";
     root->style.top = "20px";
-    root->style.width = "500px";
-    root->style.height = "auto";
+
+    root->style.width =
+        "calc(100% - 60px)";
+
+    root->style.height =
+        "calc(100% - 40px)";
 
     root->style.display = "flex";
     root->style.flexDirection = "column";
+
     root->style.padding = "14px";
     root->style.gap = "10px";
 
@@ -174,159 +179,150 @@ void GDOMTestLayer::buildTestUI()
         document->createElement("span");
 
     title->textContent =
-        "DISPLAY: NONE TEST";
+        "CALC() TEST";
 
     title->style.width = "auto";
     title->style.height = "auto";
     title->style.fontSize = "18px";
+    title->style.flexShrink = 0.f;
 
     root->appendChild(title);
 
-    //
-    // FLEX TEST
-    //
-
-    auto flexLabel =
-        document->createElement("span");
-
-    flexLabel->textContent =
-        "Flex layout";
-
-    flexLabel->style.width = "auto";
-    flexLabel->style.height = "auto";
-    flexLabel->style.fontSize = "11px";
-
-    root->appendChild(flexLabel);
-
-    auto flexRow =
+    auto fullMinus =
         document->createElement("div");
 
-    flexRow->style.width = "450px";
-    flexRow->style.height = "50px";
+    fullMinus->style.width =
+        "calc(100% - 40px)";
 
-    flexRow->style.display = "flex";
-    flexRow->style.flexDirection = "row";
-    flexRow->style.gap = "8px";
+    fullMinus->style.height =
+        "40px";
 
-    auto flexA =
-        document->createElement("div");
+    fullMinus->style.flexShrink = 0.f;
 
-    flexA->style.width = "100px";
-    flexA->style.height = "50px";
-
-    flexA->style.backgroundColor = {
+    fullMinus->style.backgroundColor = {
         70,
         130,
         255,
         255};
 
-    auto flexB =
+    root->appendChild(fullMinus);
+
+    auto halfPlus =
         document->createElement("div");
 
-    flexB->style.width = "100px";
-    flexB->style.height = "50px";
+    halfPlus->style.width =
+        "calc(50% + 40px)";
 
-    flexB->style.backgroundColor = {
+    halfPlus->style.height =
+        "40px";
+
+    halfPlus->style.flexShrink = 0.f;
+
+    halfPlus->style.backgroundColor = {
         80,
         210,
         130,
         255};
 
-    auto flexC =
+    root->appendChild(halfPlus);
+
+    auto remTest =
         document->createElement("div");
 
-    flexC->style.width = "100px";
-    flexC->style.height = "50px";
+    remTest->style.width =
+        "calc(100% - 20rem)";
 
-    flexC->style.backgroundColor = {
+    remTest->style.height =
+        "40px";
+
+    remTest->style.flexShrink = 0.f;
+
+    remTest->style.backgroundColor = {
         230,
         100,
         90,
         255};
 
-    flexRow->appendChild(flexA);
-    flexRow->appendChild(flexB);
-    flexRow->appendChild(flexC);
+    root->appendChild(remTest);
 
-    root->appendChild(flexRow);
-
-    //
-    // BLOCK TEST
-    //
-
-    auto blockLabel =
-        document->createElement("span");
-
-    blockLabel->textContent =
-        "Block layout";
-
-    blockLabel->style.width = "auto";
-    blockLabel->style.height = "auto";
-    blockLabel->style.fontSize = "11px";
-
-    root->appendChild(blockLabel);
-
-    auto blockContainer =
+    auto row =
         document->createElement("div");
 
-    blockContainer->style.width = "450px";
-    blockContainer->style.height = "auto";
-    blockContainer->style.gap = "6px";
+    row->style.width = "100%";
+    row->style.height = "60px";
 
-    auto blockA =
+    row->style.display = "flex";
+    row->style.flexDirection = "row";
+    row->style.gap = "8px";
+    row->style.flexShrink = 0.f;
+
+    auto left =
         document->createElement("div");
 
-    blockA->style.width = "450px";
-    blockA->style.height = "24px";
+    left->style.width =
+        "calc(50% - 4px)";
 
-    blockA->style.backgroundColor = {
+    left->style.height =
+        "60px";
+
+    left->style.backgroundColor = {
+        160,
+        90,
+        220,
+        255};
+
+    auto right =
+        document->createElement("div");
+
+    right->style.width =
+        "calc(50% - 4px)";
+
+    right->style.height =
+        "60px";
+
+    right->style.backgroundColor = {
+        220,
+        150,
+        60,
+        255};
+
+    row->appendChild(left);
+    row->appendChild(right);
+
+    root->appendChild(row);
+
+    auto dynamic =
+        document->createElement("div");
+
+    dynamic->style.width =
+        "calc(100% - 100px)";
+
+    dynamic->style.height =
+        "45px";
+
+    dynamic->style.flexShrink = 0.f;
+
+    dynamic->style.backgroundColor = {
         70,
-        130,
-        255,
+        180,
+        200,
         255};
 
-    auto blockB =
-        document->createElement("div");
-
-    blockB->style.width = "450px";
-    blockB->style.height = "24px";
-
-    blockB->style.backgroundColor = {
-        80,
-        210,
-        130,
-        255};
-
-    auto blockC =
-        document->createElement("div");
-
-    blockC->style.width = "450px";
-    blockC->style.height = "24px";
-
-    blockC->style.backgroundColor = {
-        230,
-        100,
-        90,
-        255};
-
-    blockContainer->appendChild(blockA);
-    blockContainer->appendChild(blockB);
-    blockContainer->appendChild(blockC);
-
-    root->appendChild(blockContainer);
-
-    //
-    // BUTTON
-    //
+    root->appendChild(dynamic);
 
     auto toggle =
         document->createElement("button");
 
     toggle->textContent =
-        "TOGGLE GREEN";
+        "TOGGLE CALC";
 
-    toggle->style.width = "160px";
-    toggle->style.height = "36px";
+    toggle->style.width =
+        "160px";
+
+    toggle->style.height =
+        "36px";
+
+    toggle->style.flexShrink = 0.f;
 
     toggle->style.backgroundColor = {
         100,
@@ -337,142 +333,26 @@ void GDOMTestLayer::buildTestUI()
     toggle->style.borderRadius =
         "7px";
 
-    auto hidden =
+    auto changed =
         new bool(false);
 
     toggle->onClick =
         [document,
-         flexB,
-         blockB,
-         hidden]()
+         dynamic,
+         changed]()
     {
-        *hidden =
-            !*hidden;
+        *changed =
+            !*changed;
 
-        flexB->style.display =
-            *hidden
-                ? "none"
-                : "block";
-
-        blockB->style.display =
-            *hidden
-                ? "none"
-                : "block";
+        dynamic->style.width =
+            *changed
+                ? "calc(50% + 60px)"
+                : "calc(100% - 100px)";
 
         document->update();
     };
 
     root->appendChild(toggle);
-
-    //
-    // FLEX + GROW + NONE
-    //
-
-    auto growLabel =
-        document->createElement("span");
-
-    growLabel->textContent =
-        "Flex-grow + display:none";
-
-    growLabel->style.width = "auto";
-    growLabel->style.height = "auto";
-    growLabel->style.fontSize = "11px";
-
-    root->appendChild(growLabel);
-
-    auto growRow =
-        document->createElement("div");
-
-    growRow->style.width = "450px";
-    growRow->style.height = "35px";
-
-    growRow->style.display = "flex";
-    growRow->style.flexDirection = "row";
-    growRow->style.gap = "6px";
-
-    auto growA =
-        document->createElement("div");
-
-    growA->style.width = "20px";
-    growA->style.height = "35px";
-    growA->style.flexGrow = 1.f;
-
-    growA->style.backgroundColor = {
-        70,
-        130,
-        255,
-        255};
-
-    auto growB =
-        document->createElement("div");
-
-    growB->style.width = "20px";
-    growB->style.height = "35px";
-    growB->style.flexGrow = 1.f;
-
-    growB->style.backgroundColor = {
-        80,
-        210,
-        130,
-        255};
-
-    auto growC =
-        document->createElement("div");
-
-    growC->style.width = "20px";
-    growC->style.height = "35px";
-    growC->style.flexGrow = 1.f;
-
-    growC->style.backgroundColor = {
-        230,
-        100,
-        90,
-        255};
-
-    growRow->appendChild(growA);
-    growRow->appendChild(growB);
-    growRow->appendChild(growC);
-
-    root->appendChild(growRow);
-
-    auto toggleGrow =
-        document->createElement("button");
-
-    toggleGrow->textContent =
-        "TOGGLE GROW";
-
-    toggleGrow->style.width = "160px";
-    toggleGrow->style.height = "36px";
-
-    toggleGrow->style.backgroundColor = {
-        180,
-        80,
-        90,
-        255};
-
-    toggleGrow->style.borderRadius =
-        "7px";
-
-    auto growHidden =
-        new bool(false);
-
-    toggleGrow->onClick =
-        [document,
-         growB,
-         growHidden]()
-    {
-        *growHidden =
-            !*growHidden;
-
-        growB->style.display =
-            *growHidden
-                ? "none"
-                : "block";
-
-        document->update();
-    };
-
-    root->appendChild(toggleGrow);
 
     document->appendChild(root);
     document->render();
