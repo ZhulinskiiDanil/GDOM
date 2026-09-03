@@ -236,6 +236,13 @@ namespace gdom
         element
             ->resetResolvedSizeRecursive();
 
+        element->m_lastFlowOffset = {
+            0.f,
+            0.f};
+
+        element->m_hasLastFlowOffset =
+            false;
+
         requestUpdate();
 
         return true;
@@ -355,6 +362,13 @@ namespace gdom
 
         oldElement
             ->resetResolvedSizeRecursive();
+
+        oldElement->m_lastFlowOffset = {
+            0.f,
+            0.f};
+
+        oldElement->m_hasLastFlowOffset =
+            false;
 
         newElement->m_parentElement =
             nullptr;
@@ -762,11 +776,16 @@ namespace gdom
         auto *cocosParent =
             oldNode->getParent();
 
-        const auto oldPosition =
-            oldNode->getPosition();
-
         const int oldZOrder =
             oldNode->getZOrder();
+
+        if (!element->m_hasLastFlowOffset)
+        {
+            return false;
+        }
+
+        const CCPoint flowOffset =
+            element->m_lastFlowOffset;
 
         const auto parentSize =
             parentElement->getContentSize();
@@ -817,24 +836,6 @@ namespace gdom
                     margin.top -
                     margin.bottom)};
 
-        const float left =
-            LengthResolver::resolve(
-                element->style.left,
-                parentSize.width);
-
-        const float top =
-            LengthResolver::resolve(
-                element->style.top,
-                parentSize.height);
-
-        const CCPoint flowOffset{
-            oldPosition.x -
-                left,
-
-            parentSize.height -
-                oldPosition.y -
-                top};
-
         oldNode
             ->removeFromParentAndCleanup(
                 true);
@@ -852,6 +853,12 @@ namespace gdom
 
         element->setResolvedSize(
             elementSize);
+
+        element->m_lastFlowOffset =
+            flowOffset;
+
+        element->m_hasLastFlowOffset =
+            true;
 
         auto *newNode =
             element->render(
@@ -1060,6 +1067,12 @@ namespace gdom
             const CCPoint flowOffset{
                 margin.left,
                 currentY};
+
+            element->m_lastFlowOffset =
+                flowOffset;
+
+            element->m_hasLastFlowOffset =
+                true;
 
             auto *node =
                 element->render(

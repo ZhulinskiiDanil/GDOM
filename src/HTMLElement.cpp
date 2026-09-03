@@ -215,6 +215,13 @@ namespace gdom
         child
             ->resetResolvedSizeRecursive();
 
+        child->m_lastFlowOffset = {
+            0.f,
+            0.f};
+
+        child->m_hasLastFlowOffset =
+            false;
+
         invalidateTree();
 
         return true;
@@ -346,6 +353,13 @@ namespace gdom
 
         oldChild
             ->resetResolvedSizeRecursive();
+
+        oldChild->m_lastFlowOffset = {
+            0.f,
+            0.f};
+
+        oldChild->m_hasLastFlowOffset =
+            false;
 
         newChild->m_parentElement =
             this;

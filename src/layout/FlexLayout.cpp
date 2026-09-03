@@ -774,6 +774,12 @@ namespace gdom::layout
                 x,
                 y};
 
+            child->m_lastFlowOffset =
+                flowOffset;
+
+            child->m_hasLastFlowOffset =
+                true;
+
             auto *childNode =
                 child->render(
                     parentSize,

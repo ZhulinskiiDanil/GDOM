@@ -187,6 +187,13 @@ namespace gdom
         bool m_hasResolvedSize =
             false;
 
+        CCPoint m_lastFlowOffset{
+            0.f,
+            0.f};
+
+        bool m_hasLastFlowOffset =
+            false;
+
         GDOMDocument *
             m_document =
                 nullptr;

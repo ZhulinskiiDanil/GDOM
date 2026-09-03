@@ -145,310 +145,440 @@ void GDOMTestLayer::buildTestUI()
 
     if (!document)
     {
-        log::error(
-            "TEST: document create failed");
-
         return;
     }
 
-    log::info(
-        "TEST: document created");
+    //
+    // ROOT
+    //
+    // Важно:
+    // testArea будет находиться НЕ в (0, 0).
+    // Его позиция зависит от:
+    // padding + margin + gap + flex layout.
+    //
 
     auto root =
         document->createElement("div");
 
-    if (!root)
-    {
-        log::error(
-            "TEST: root create failed");
-
-        return;
-    }
-
-    root->style.left = "70px";
+    root->style.left = "60px";
     root->style.top = "30px";
 
-    root->style.width = "360px";
-    root->style.height = "210px";
+    root->style.width = "430px";
+    root->style.height = "250px";
 
     root->style.display = "flex";
     root->style.flexDirection = "column";
 
-    root->style.padding = "10px";
-    root->style.gap = "8px";
+    root->style.padding = "15px";
+    root->style.gap = "12px";
 
     root->style.backgroundColor = {
-        35,
+        25,
+        28,
         38,
-        50,
         255};
 
     root->style.borderRadius =
         "8px";
 
     //
-    // INPUT A
+    // HEADER
+    //
+    // Нужен специально, чтобы testArea
+    // получил ненулевой flowOffset.y.
     //
 
-    auto inputA =
-        document->createElement("input");
-
-    if (!inputA)
-    {
-        log::error(
-            "TEST: input A create failed");
-
-        return;
-    }
-
-    inputA->placeholder =
-        "Input A";
-
-    inputA->style.width = "300px";
-    inputA->style.height = "36px";
-
-    inputA->style.paddingLeft = "8px";
-    inputA->style.paddingRight = "8px";
-
-    inputA->style.fontSize = "11px";
-    inputA->style.flexShrink = 0.f;
-
-    inputA->style.backgroundColor = {
-        55,
-        60,
-        75,
-        255};
-
-    inputA->style.borderRadius =
-        "5px";
-
-    //
-    // INPUT B
-    //
-
-    auto inputB =
-        document->createElement("input");
-
-    if (!inputB)
-    {
-        log::error(
-            "TEST: input B create failed");
-
-        return;
-    }
-
-    inputB->placeholder =
-        "Input B";
-
-    inputB->style.width = "300px";
-    inputB->style.height = "36px";
-
-    inputB->style.paddingLeft = "8px";
-    inputB->style.paddingRight = "8px";
-
-    inputB->style.fontSize = "11px";
-    inputB->style.flexShrink = 0.f;
-
-    inputB->style.backgroundColor = {
-        55,
-        60,
-        75,
-        255};
-
-    inputB->style.borderRadius =
-        "5px";
-
-    //
-    // BUTTONS
-    //
-
-    auto row =
+    auto header =
         document->createElement("div");
 
-    row->style.width = "300px";
-    row->style.height = "34px";
+    header->style.width = "380px";
+    header->style.height = "35px";
+    header->style.flexShrink = 0.f;
 
-    row->style.display = "flex";
-    row->style.flexDirection = "row";
+    header->style.backgroundColor = {
+        55,
+        60,
+        80,
+        255};
 
-    row->style.gap = "6px";
-    row->style.flexShrink = 0.f;
+    header->style.borderRadius =
+        "5px";
 
-    auto focusA =
+    root->appendChild(
+        header);
+
+    //
+    // TEST AREA
+    //
+    // Именно этот элемент должен локально
+    // rerender-иться при изменениях внутри.
+    //
+
+    auto testArea =
+        document->createElement("div");
+
+    testArea->style.width = "380px";
+    testArea->style.height = "100px";
+
+    testArea->style.marginLeft =
+        "8px";
+
+    testArea->style.flexShrink =
+        0.f;
+
+    testArea->style.display =
+        "flex";
+
+    testArea->style.flexDirection =
+        "row";
+
+    testArea->style.alignItems =
+        "center";
+
+    testArea->style.gap =
+        "10px";
+
+    testArea->style.padding =
+        "10px";
+
+    testArea->style.backgroundColor = {
+        40,
+        45,
+        60,
+        255};
+
+    testArea->style.borderRadius =
+        "6px";
+
+    //
+    // BOX A
+    //
+
+    auto boxA =
+        document->createElement("div");
+
+    boxA->style.width = "70px";
+    boxA->style.height = "50px";
+    boxA->style.flexShrink = 0.f;
+
+    boxA->style.backgroundColor = {
+        180,
+        80,
+        80,
+        255};
+
+    boxA->style.borderRadius =
+        "5px";
+
+    //
+    // BOX B
+    //
+
+    auto boxB =
+        document->createElement("div");
+
+    boxB->style.width = "70px";
+    boxB->style.height = "50px";
+    boxB->style.flexShrink = 0.f;
+
+    boxB->style.backgroundColor = {
+        80,
+        150,
+        220,
+        255};
+
+    boxB->style.borderRadius =
+        "5px";
+
+    testArea->appendChild(
+        boxA);
+
+    testArea->appendChild(
+        boxB);
+
+    root->appendChild(
+        testArea);
+
+    //
+    // BUTTON ROW
+    //
+
+    auto buttons =
+        document->createElement("div");
+
+    buttons->style.width = "390px";
+    buttons->style.height = "32px";
+
+    buttons->style.display =
+        "flex";
+
+    buttons->style.flexDirection =
+        "row";
+
+    buttons->style.gap =
+        "5px";
+
+    buttons->style.flexShrink =
+        0.f;
+
+    //
+    // WIDTH
+    //
+
+    auto widthButton =
         document->createElement("button");
 
-    focusA->textContent =
-        "FOCUS A";
+    widthButton->textContent =
+        "WIDTH";
 
-    focusA->style.width = "90px";
-    focusA->style.height = "34px";
-    focusA->style.flexShrink = 0.f;
+    widthButton->style.width =
+        "75px";
 
-    auto focusB =
+    widthButton->style.height =
+        "32px";
+
+    widthButton->style.flexShrink =
+        0.f;
+
+    //
+    // HEIGHT
+    //
+
+    auto heightButton =
         document->createElement("button");
 
-    focusB->textContent =
-        "FOCUS B";
+    heightButton->textContent =
+        "HEIGHT";
 
-    focusB->style.width = "90px";
-    focusB->style.height = "34px";
-    focusB->style.flexShrink = 0.f;
+    heightButton->style.width =
+        "75px";
 
-    auto blur =
+    heightButton->style.height =
+        "32px";
+
+    heightButton->style.flexShrink =
+        0.f;
+
+    //
+    // GAP
+    //
+
+    auto gapButton =
         document->createElement("button");
 
-    blur->textContent =
-        "BLUR";
+    gapButton->textContent =
+        "GAP";
 
-    blur->style.width = "80px";
-    blur->style.height = "34px";
-    blur->style.flexShrink = 0.f;
+    gapButton->style.width =
+        "70px";
+
+    gapButton->style.height =
+        "32px";
+
+    gapButton->style.flexShrink =
+        0.f;
+
+    //
+    // ALIGN
+    //
+
+    auto alignButton =
+        document->createElement("button");
+
+    alignButton->textContent =
+        "ALIGN";
+
+    alignButton->style.width =
+        "70px";
+
+    alignButton->style.height =
+        "32px";
+
+    alignButton->style.flexShrink =
+        0.f;
+
+    //
+    // RESET
+    //
+
+    auto resetButton =
+        document->createElement("button");
+
+    resetButton->textContent =
+        "RESET";
+
+    resetButton->style.width =
+        "75px";
+
+    resetButton->style.height =
+        "32px";
+
+    resetButton->style.flexShrink =
+        0.f;
+
+    buttons->appendChild(
+        widthButton);
+
+    buttons->appendChild(
+        heightButton);
+
+    buttons->appendChild(
+        gapButton);
+
+    buttons->appendChild(
+        alignButton);
+
+    buttons->appendChild(
+        resetButton);
+
+    root->appendChild(
+        buttons);
 
     //
     // EVENTS
     //
 
-    inputA->onFocus =
-        [document, inputA]()
+    bool wide =
+        false;
+
+    widthButton->onClick =
+        [document,
+         boxA,
+         &wide]()
     {
-        log::info(
-            "TEST: A FOCUS");
+        wide =
+            !wide;
+
+        boxA->style.width =
+            wide
+                ? "140px"
+                : "70px";
 
         log::info(
-            "TEST: focused == A: {}",
-            document->getFocusedElement() ==
-                inputA);
+            "PARTIAL TEST: width -> {}",
+            wide
+                ? 140
+                : 70);
+
+        document->update();
     };
 
-    inputA->onBlur =
-        []()
+    bool tall =
+        false;
+
+    heightButton->onClick =
+        [document,
+         boxA,
+         &tall]()
     {
+        tall =
+            !tall;
+
+        boxA->style.height =
+            tall
+                ? "75px"
+                : "50px";
+
         log::info(
-            "TEST: A BLUR");
+            "PARTIAL TEST: height -> {}",
+            tall
+                ? 75
+                : 50);
+
+        document->update();
     };
 
-    inputB->onFocus =
-        [document, inputB]()
+    bool largeGap =
+        false;
+
+    gapButton->onClick =
+        [document,
+         testArea,
+         &largeGap]()
     {
-        log::info(
-            "TEST: B FOCUS");
+        largeGap =
+            !largeGap;
+
+        testArea->style.gap =
+            largeGap
+                ? "35px"
+                : "10px";
 
         log::info(
-            "TEST: focused == B: {}",
-            document->getFocusedElement() ==
-                inputB);
+            "PARTIAL TEST: gap changed");
+
+        document->update();
     };
 
-    inputB->onBlur =
-        []()
+    bool centered =
+        false;
+
+    alignButton->onClick =
+        [document,
+         testArea,
+         &centered]()
     {
+        centered =
+            !centered;
+
+        testArea->style.justifyContent =
+            centered
+                ? "center"
+                : "flex-start";
+
         log::info(
-            "TEST: B BLUR");
+            "PARTIAL TEST: justify -> {}",
+            centered
+                ? "center"
+                : "flex-start");
+
+        document->update();
     };
 
-    inputA->onInput =
-        [](
-            const std::string &value)
+    resetButton->onClick =
+        [document,
+         boxA,
+         testArea,
+         &wide,
+         &tall,
+         &largeGap,
+         &centered]()
     {
+        wide =
+            false;
+
+        tall =
+            false;
+
+        largeGap =
+            false;
+
+        centered =
+            false;
+
+        boxA->style.width =
+            "70px";
+
+        boxA->style.height =
+            "50px";
+
+        testArea->style.gap =
+            "10px";
+
+        testArea->style.justifyContent =
+            "flex-start";
+
         log::info(
-            "TEST: A INPUT '{}'",
-            value);
+            "PARTIAL TEST: reset");
+
+        document->update();
     };
-
-    inputB->onInput =
-        [](
-            const std::string &value)
-    {
-        log::info(
-            "TEST: B INPUT '{}'",
-            value);
-    };
-
-    focusA->onClick =
-        [inputA]()
-    {
-        log::info(
-            "TEST: calling A.focus()");
-
-        const bool result =
-            inputA->focus();
-
-        log::info(
-            "TEST: A.focus() = {}",
-            result);
-    };
-
-    focusB->onClick =
-        [inputB]()
-    {
-        log::info(
-            "TEST: calling B.focus()");
-
-        const bool result =
-            inputB->focus();
-
-        log::info(
-            "TEST: B.focus() = {}",
-            result);
-    };
-
-    blur->onClick =
-        [document]()
-    {
-        log::info(
-            "TEST: calling blur");
-
-        auto *focused =
-            document->getFocusedElement();
-
-        if (focused)
-        {
-            focused->blur();
-        }
-    };
-
-    //
-    // TREE
-    //
-
-    row->appendChild(
-        focusA);
-
-    row->appendChild(
-        focusB);
-
-    row->appendChild(
-        blur);
-
-    root->appendChild(
-        inputA);
-
-    root->appendChild(
-        inputB);
-
-    root->appendChild(
-        row);
 
     document->appendChild(
         root);
 
-    log::info(
-        "TEST: rendering");
-
     document->render();
 
     log::info(
-        "TEST: rendered");
-
-    log::info(
-        "TEST: root mounted = {}",
-        root->isMounted());
-
-    log::info(
-        "TEST: input A mounted = {}",
-        inputA->isMounted());
-
-    log::info(
-        "TEST: input B mounted = {}",
-        inputB->isMounted());
+        "PARTIAL TEST: ready");
 }

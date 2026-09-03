@@ -109,11 +109,17 @@ namespace gdom::layout
             currentY +=
                 margin.top;
 
-            CCPoint flowOffset{
+            const CCPoint flowOffset{
                 padding.left +
                     margin.left,
 
                 currentY};
+
+            child->m_lastFlowOffset =
+                flowOffset;
+
+            child->m_hasLastFlowOffset =
+                true;
 
             auto childNode =
                 child->render(
