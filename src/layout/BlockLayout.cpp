@@ -59,7 +59,9 @@ namespace gdom::layout
 
         for (auto *child : element->m_children)
         {
-            if (!child)
+            if (
+                !child ||
+                child->style.display == "none")
             {
                 continue;
             }

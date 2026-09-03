@@ -333,6 +333,13 @@ namespace gdom
         const CCSize &containingSize,
         const CCSize &availableSize) const
     {
+        if (style.display == "none")
+        {
+            return {
+                0.f,
+                0.f};
+        }
+
         float width =
             0.f;
 
@@ -431,6 +438,11 @@ namespace gdom
         const CCSize &parentSize,
         float resolvedWidth) const
     {
+        if (style.display == "none")
+        {
+            return 0.f;
+        }
+
         const auto padding =
             BoxResolver::resolve(
                 style.padding,
@@ -473,7 +485,9 @@ namespace gdom
             for (auto *child :
                  m_children)
             {
-                if (!child)
+                if (
+                    !child ||
+                    child->style.display == "none")
                 {
                     continue;
                 }
@@ -527,7 +541,9 @@ namespace gdom
         for (auto *child :
              m_children)
         {
-            if (!child)
+            if (
+                !child ||
+                child->style.display == "none")
             {
                 continue;
             }
@@ -580,7 +596,9 @@ namespace gdom
     void HTMLElement::renderChildren(
         CCNode *node)
     {
-        if (!node)
+        if (
+            !node ||
+            style.display == "none")
         {
             return;
         }
