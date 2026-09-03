@@ -164,6 +164,27 @@ namespace gdom
             return false;
         }
 
+        if (m_document)
+        {
+            auto *focused =
+                m_document
+                    ->getFocusedElement();
+
+            for (
+                auto *current =
+                    focused;
+                current;
+                current =
+                    current->m_parentElement)
+            {
+                if (current == child)
+                {
+                    focused->blur();
+                    break;
+                }
+            }
+        }
+
         auto *renderedNode =
             child->getRenderedNode();
 
@@ -281,6 +302,27 @@ namespace gdom
             return false;
         }
 
+        if (m_document)
+        {
+            auto *focused =
+                m_document
+                    ->getFocusedElement();
+
+            for (
+                auto *current =
+                    focused;
+                current;
+                current =
+                    current->m_parentElement)
+            {
+                if (current == oldChild)
+                {
+                    focused->blur();
+                    break;
+                }
+            }
+        }
+
         auto *oldRenderedNode =
             oldChild->getRenderedNode();
 
@@ -317,6 +359,82 @@ namespace gdom
         invalidateTree();
 
         return true;
+    }
+
+    bool HTMLElement::focus()
+    {
+        if (
+            !m_document ||
+            !isFocusable())
+        {
+            return false;
+        }
+
+        return m_document
+            ->focusElement(
+                this,
+                false);
+    }
+
+    void HTMLElement::blur()
+    {
+        if (!m_document)
+        {
+            return;
+        }
+
+        m_document
+            ->blurElement(
+                this,
+                false);
+    }
+
+    bool HTMLElement::isFocused() const
+    {
+        return
+            m_document &&
+            m_document
+                ->getFocusedElement() ==
+                this;
+    }
+
+    bool HTMLElement::isFocusable() const
+    {
+        return false;
+    }
+
+    void HTMLElement::focusNative()
+    {
+    }
+
+    void HTMLElement::blurNative()
+    {
+    }
+
+    void HTMLElement::notifyNativeFocus()
+    {
+        if (!m_document)
+        {
+            return;
+        }
+
+        m_document
+            ->focusElement(
+                this,
+                true);
+    }
+
+    void HTMLElement::notifyNativeBlur()
+    {
+        if (!m_document)
+        {
+            return;
+        }
+
+        m_document
+            ->blurElement(
+                this,
+                true);
     }
 
     HTMLElement *

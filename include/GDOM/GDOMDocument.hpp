@@ -34,6 +34,9 @@ namespace gdom
             HTMLElement *newElement,
             HTMLElement *oldElement);
 
+        HTMLElement *
+        getFocusedElement() const;
+
         void render();
 
         void update();
@@ -75,6 +78,14 @@ namespace gdom
         bool ownsElement(
             const HTMLElement *element) const;
 
+        bool focusElement(
+            HTMLElement *element,
+            bool nativeAlreadyFocused);
+
+        void blurElement(
+            HTMLElement *element,
+            bool nativeAlreadyBlurred);
+
         void renderRoots();
 
         void removeRenderedRoots();
@@ -113,8 +124,14 @@ namespace gdom
             std::unique_ptr<HTMLElement>>
             m_ownedElements;
 
+        HTMLElement *
+            m_focusedElement =
+                nullptr;
+
         bool m_updateRequested =
             false;
+
+        friend class HTMLElement;
     };
 
 }

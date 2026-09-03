@@ -145,110 +145,310 @@ void GDOMTestLayer::buildTestUI()
 
     if (!document)
     {
+        log::error(
+            "TEST: document create failed");
+
         return;
     }
+
+    log::info(
+        "TEST: document created");
 
     auto root =
         document->createElement("div");
 
-    root->style.left = "20px";
-    root->style.top = "20px";
-    root->style.width = "420px";
-    root->style.height = "220px";
+    if (!root)
+    {
+        log::error(
+            "TEST: root create failed");
+
+        return;
+    }
+
+    root->style.left = "70px";
+    root->style.top = "30px";
+
+    root->style.width = "360px";
+    root->style.height = "210px";
 
     root->style.display = "flex";
     root->style.flexDirection = "column";
-    root->style.gap = "8px";
+
     root->style.padding = "10px";
+    root->style.gap = "8px";
 
     root->style.backgroundColor = {
-        20,
-        20,
-        26,
+        35,
+        38,
+        50,
         255};
 
-    auto title =
-        document->createElement("span");
+    root->style.borderRadius =
+        "8px";
 
-    title->textContent =
-        "DOCUMENT LIFETIME TEST";
+    //
+    // INPUT A
+    //
 
-    title->style.width = "auto";
-    title->style.height = "auto";
-    title->style.fontSize = "13px";
-    title->style.flexShrink = 0.f;
+    auto inputA =
+        document->createElement("input");
 
-    root->appendChild(title);
-
-    auto status =
-        document->createElement("span");
-
-    status->textContent =
-        "DOCUMENT ALIVE";
-
-    status->style.width = "auto";
-    status->style.height = "auto";
-    status->style.fontSize = "10px";
-    status->style.flexShrink = 0.f;
-
-    root->appendChild(status);
-
-    auto blocks =
-        document->createElement("div");
-
-    blocks->style.width = "100%";
-    blocks->style.height = "60px";
-
-    blocks->style.display = "flex";
-    blocks->style.flexDirection = "row";
-    blocks->style.gap = "3px";
-    blocks->style.flexShrink = 0.f;
-
-    for (int i = 0; i < 30; ++i)
+    if (!inputA)
     {
-        auto item =
-            document->createElement("div");
+        log::error(
+            "TEST: input A create failed");
 
-        item->style.width = "10px";
-        item->style.height = "60px";
-        item->style.flexShrink = 0.f;
-
-        item->style.backgroundColor = {
-            static_cast<GLubyte>(70 + i * 3),
-            static_cast<GLubyte>(110 + i * 2),
-            220,
-            255};
-
-        blocks->appendChild(item);
+        return;
     }
 
-    root->appendChild(blocks);
+    inputA->placeholder =
+        "Input A";
 
-    auto destroyButton =
+    inputA->style.width = "300px";
+    inputA->style.height = "36px";
+
+    inputA->style.paddingLeft = "8px";
+    inputA->style.paddingRight = "8px";
+
+    inputA->style.fontSize = "11px";
+    inputA->style.flexShrink = 0.f;
+
+    inputA->style.backgroundColor = {
+        55,
+        60,
+        75,
+        255};
+
+    inputA->style.borderRadius =
+        "5px";
+
+    //
+    // INPUT B
+    //
+
+    auto inputB =
+        document->createElement("input");
+
+    if (!inputB)
+    {
+        log::error(
+            "TEST: input B create failed");
+
+        return;
+    }
+
+    inputB->placeholder =
+        "Input B";
+
+    inputB->style.width = "300px";
+    inputB->style.height = "36px";
+
+    inputB->style.paddingLeft = "8px";
+    inputB->style.paddingRight = "8px";
+
+    inputB->style.fontSize = "11px";
+    inputB->style.flexShrink = 0.f;
+
+    inputB->style.backgroundColor = {
+        55,
+        60,
+        75,
+        255};
+
+    inputB->style.borderRadius =
+        "5px";
+
+    //
+    // BUTTONS
+    //
+
+    auto row =
+        document->createElement("div");
+
+    row->style.width = "300px";
+    row->style.height = "34px";
+
+    row->style.display = "flex";
+    row->style.flexDirection = "row";
+
+    row->style.gap = "6px";
+    row->style.flexShrink = 0.f;
+
+    auto focusA =
         document->createElement("button");
 
-    destroyButton->textContent =
-        "DELETE DOCUMENT";
+    focusA->textContent =
+        "FOCUS A";
 
-    destroyButton->style.width = "160px";
-    destroyButton->style.height = "32px";
-    destroyButton->style.flexShrink = 0.f;
+    focusA->style.width = "90px";
+    focusA->style.height = "34px";
+    focusA->style.flexShrink = 0.f;
 
-    root->appendChild(
-        destroyButton);
+    auto focusB =
+        document->createElement("button");
 
-    document->appendChild(root);
-    document->render();
+    focusB->textContent =
+        "FOCUS B";
 
-    destroyButton->onClick =
+    focusB->style.width = "90px";
+    focusB->style.height = "34px";
+    focusB->style.flexShrink = 0.f;
+
+    auto blur =
+        document->createElement("button");
+
+    blur->textContent =
+        "BLUR";
+
+    blur->style.width = "80px";
+    blur->style.height = "34px";
+    blur->style.flexShrink = 0.f;
+
+    //
+    // EVENTS
+    //
+
+    inputA->onFocus =
+        [document, inputA]()
+    {
+        log::info(
+            "TEST: A FOCUS");
+
+        log::info(
+            "TEST: focused == A: {}",
+            document->getFocusedElement() ==
+                inputA);
+    };
+
+    inputA->onBlur =
+        []()
+    {
+        log::info(
+            "TEST: A BLUR");
+    };
+
+    inputB->onFocus =
+        [document, inputB]()
+    {
+        log::info(
+            "TEST: B FOCUS");
+
+        log::info(
+            "TEST: focused == B: {}",
+            document->getFocusedElement() ==
+                inputB);
+    };
+
+    inputB->onBlur =
+        []()
+    {
+        log::info(
+            "TEST: B BLUR");
+    };
+
+    inputA->onInput =
+        [](
+            const std::string &value)
+    {
+        log::info(
+            "TEST: A INPUT '{}'",
+            value);
+    };
+
+    inputB->onInput =
+        [](
+            const std::string &value)
+    {
+        log::info(
+            "TEST: B INPUT '{}'",
+            value);
+    };
+
+    focusA->onClick =
+        [inputA]()
+    {
+        log::info(
+            "TEST: calling A.focus()");
+
+        const bool result =
+            inputA->focus();
+
+        log::info(
+            "TEST: A.focus() = {}",
+            result);
+    };
+
+    focusB->onClick =
+        [inputB]()
+    {
+        log::info(
+            "TEST: calling B.focus()");
+
+        const bool result =
+            inputB->focus();
+
+        log::info(
+            "TEST: B.focus() = {}",
+            result);
+    };
+
+    blur->onClick =
         [document]()
     {
         log::info(
-            "GDOM TEST: deleting document");
+            "TEST: calling blur");
 
-        delete document;
+        auto *focused =
+            document->getFocusedElement();
 
-        log::info(
-            "GDOM TEST: document deleted");
+        if (focused)
+        {
+            focused->blur();
+        }
     };
+
+    //
+    // TREE
+    //
+
+    row->appendChild(
+        focusA);
+
+    row->appendChild(
+        focusB);
+
+    row->appendChild(
+        blur);
+
+    root->appendChild(
+        inputA);
+
+    root->appendChild(
+        inputB);
+
+    root->appendChild(
+        row);
+
+    document->appendChild(
+        root);
+
+    log::info(
+        "TEST: rendering");
+
+    document->render();
+
+    log::info(
+        "TEST: rendered");
+
+    log::info(
+        "TEST: root mounted = {}",
+        root->isMounted());
+
+    log::info(
+        "TEST: input A mounted = {}",
+        inputA->isMounted());
+
+    log::info(
+        "TEST: input B mounted = {}",
+        inputB->isMounted());
 }

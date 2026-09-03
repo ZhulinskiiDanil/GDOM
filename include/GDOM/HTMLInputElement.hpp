@@ -2,17 +2,23 @@
 
 #include <GDOM/HTMLElement.hpp>
 
+#include <Geode/binding/TextInputDelegate.hpp>
+
 namespace geode
 {
     class TextInput;
 }
+
+class CCTextInputNode;
 
 namespace gdom
 {
 
     class RoundedRectNode;
 
-    class HTMLInputElement : public HTMLElement
+    class HTMLInputElement :
+        public HTMLElement,
+        public TextInputDelegate
     {
     public:
         static HTMLInputElement *create();
@@ -24,6 +30,15 @@ namespace gdom
         CCSize resolveSize(
             const CCSize &parentSize) const override;
 
+        void textChanged(
+            CCTextInputNode *input) override;
+
+        void textInputOpened(
+            CCTextInputNode *input) override;
+
+        void textInputClosed(
+            CCTextInputNode *input) override;
+
     protected:
         CCNode *render(
             const CCSize &parentSize,
@@ -32,6 +47,12 @@ namespace gdom
                 0.f}) override;
 
         void applyPaint() override;
+
+        bool isFocusable() const override;
+
+        void focusNative() override;
+
+        void blurNative() override;
 
     private:
         void applyNativeStyle();

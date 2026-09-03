@@ -35,6 +35,17 @@ namespace gdom
 
     GDOMDocument::~GDOMDocument()
     {
+        if (m_focusedElement)
+        {
+            auto *focused =
+                m_focusedElement;
+
+            m_focusedElement =
+                nullptr;
+
+            focused->blurNative();
+        }
+
         removeRenderedRoots();
 
         for (auto &element :
@@ -183,6 +194,16 @@ namespace gdom
             return false;
         }
 
+        if (
+            m_focusedElement &&
+            isAncestorOf(
+                element,
+                m_focusedElement))
+        {
+            m_focusedElement
+                ->blur();
+        }
+
         auto *renderedNode =
             element->getRenderedNode();
 
@@ -301,6 +322,16 @@ namespace gdom
             return false;
         }
 
+        if (
+            m_focusedElement &&
+            isAncestorOf(
+                oldElement,
+                m_focusedElement))
+        {
+            m_focusedElement
+                ->blur();
+        }
+
         auto *oldRenderedNode =
             oldElement->getRenderedNode();
 
@@ -337,6 +368,87 @@ namespace gdom
         requestUpdate();
 
         return true;
+    }
+
+    HTMLElement *
+    GDOMDocument::getFocusedElement() const
+    {
+        return m_focusedElement;
+    }
+
+    bool GDOMDocument::focusElement(
+        HTMLElement *element,
+        bool nativeAlreadyFocused)
+    {
+        if (
+            !element ||
+            !ownsElement(element) ||
+            element->m_document != this ||
+            !element->isFocusable())
+        {
+            return false;
+        }
+
+        if (m_focusedElement == element)
+        {
+            return true;
+        }
+
+        auto *previous =
+            m_focusedElement;
+
+        if (previous)
+        {
+            m_focusedElement =
+                nullptr;
+
+            previous->blurNative();
+
+            if (previous->onBlur)
+            {
+                previous->onBlur();
+            }
+        }
+
+        m_focusedElement =
+            element;
+
+        if (!nativeAlreadyFocused)
+        {
+            element->focusNative();
+        }
+
+        if (element->onFocus)
+        {
+            element->onFocus();
+        }
+
+        return true;
+    }
+
+    void GDOMDocument::blurElement(
+        HTMLElement *element,
+        bool nativeAlreadyBlurred)
+    {
+        if (
+            !element ||
+            m_focusedElement != element)
+        {
+            return;
+        }
+
+        m_focusedElement =
+            nullptr;
+
+        if (!nativeAlreadyBlurred)
+        {
+            element->blurNative();
+        }
+
+        if (element->onBlur)
+        {
+            element->onBlur();
+        }
     }
 
     void GDOMDocument::requestUpdate()

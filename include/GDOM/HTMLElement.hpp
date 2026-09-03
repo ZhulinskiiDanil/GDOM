@@ -54,6 +54,12 @@ namespace gdom
             const std::string &)>
             onInput;
 
+        std::function<void()>
+            onFocus;
+
+        std::function<void()>
+            onBlur;
+
         void appendChild(
             HTMLElement *child);
 
@@ -63,6 +69,12 @@ namespace gdom
         bool replaceChild(
             HTMLElement *newChild,
             HTMLElement *oldChild);
+
+        bool focus();
+
+        void blur();
+
+        bool isFocused() const;
 
         HTMLElement *
         getParentElement() const;
@@ -136,6 +148,16 @@ namespace gdom
                 0.f}) = 0;
 
         virtual void applyPaint();
+
+        virtual bool isFocusable() const;
+
+        virtual void focusNative();
+
+        virtual void blurNative();
+
+        void notifyNativeFocus();
+
+        void notifyNativeBlur();
 
         void renderChildren(
             CCNode *node);

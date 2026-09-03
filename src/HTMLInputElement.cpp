@@ -124,6 +124,66 @@ namespace gdom
             height};
     }
 
+    bool HTMLInputElement::isFocusable() const
+    {
+        return
+            isMounted() &&
+            m_input != nullptr;
+    }
+
+    void HTMLInputElement::focusNative()
+    {
+        if (!m_input)
+        {
+            return;
+        }
+
+        m_input->focus();
+    }
+
+    void HTMLInputElement::blurNative()
+    {
+        if (!m_input)
+        {
+            return;
+        }
+
+        m_input->defocus();
+    }
+
+    void HTMLInputElement::textChanged(
+        CCTextInputNode *input)
+    {
+        if (!input)
+        {
+            return;
+        }
+
+        const std::string newValue =
+            input->getString();
+
+        value =
+            newValue;
+
+        if (onInput)
+        {
+            onInput(
+                newValue);
+        }
+    }
+
+    void HTMLInputElement::textInputOpened(
+        CCTextInputNode *input)
+    {
+        notifyNativeFocus();
+    }
+
+    void HTMLInputElement::textInputClosed(
+        CCTextInputNode *input)
+    {
+        notifyNativeBlur();
+    }
+
     CCNode *HTMLInputElement::render(
         const CCSize &parentSize,
         const CCPoint &flowOffset)
@@ -155,8 +215,9 @@ namespace gdom
         container->setContentSize(
             size);
 
-        container->setAnchorPoint({0.f,
-                                   1.f});
+        container->setAnchorPoint({
+            0.f,
+            1.f});
 
         const float left =
             LengthResolver::resolve(
@@ -168,12 +229,13 @@ namespace gdom
                 style.top,
                 parentSize.height);
 
-        container->setPosition({flowOffset.x +
-                                    left,
+        container->setPosition({
+            flowOffset.x +
+                left,
 
-                                parentSize.height -
-                                    flowOffset.y -
-                                    top});
+            parentSize.height -
+                flowOffset.y -
+                top});
 
         const float borderWidth =
             std::max(
@@ -203,11 +265,13 @@ namespace gdom
 
         if (m_background)
         {
-            m_background->setAnchorPoint({0.f,
-                                          0.f});
+            m_background->setAnchorPoint({
+                0.f,
+                0.f});
 
-            m_background->setPosition({0.f,
-                                       0.f});
+            m_background->setPosition({
+                0.f,
+                0.f});
 
             container->addChild(
                 m_background,
@@ -254,24 +318,19 @@ namespace gdom
             value.get(),
             false);
 
-        m_input->setPosition({padding.left +
-                                  inputWidth / 2.f,
+        //
+        // Use HTMLInputElement directly as the native delegate.
+        // This gives us textChanged + opened + closed without
+        // subclassing Geode's TextInput.
+        //
+        m_input->setDelegate(
+            this);
 
-                              size.height / 2.f});
+        m_input->setPosition({
+            padding.left +
+                inputWidth / 2.f,
 
-        m_input->setCallback(
-            [this](
-                const std::string &newValue)
-            {
-                value =
-                    newValue;
-
-                if (onInput)
-                {
-                    onInput(
-                        newValue);
-                }
-            });
+            size.height / 2.f});
 
         container->addChild(
             m_input,
@@ -280,8 +339,16 @@ namespace gdom
         applyNativeStyle();
         applyPaint();
 
-        return finishRender(
-            container);
+        auto *result =
+            finishRender(
+                container);
+
+        if (isFocused())
+        {
+            focusNative();
+        }
+
+        return result;
     }
 
     void HTMLInputElement::applyNativeStyle()
@@ -305,13 +372,15 @@ namespace gdom
         const auto &placeholderColor =
             style.placeholderColor.get();
 
-        inputNode->setLabelNormalColor({textColor.r,
-                                        textColor.g,
-                                        textColor.b});
+        inputNode->setLabelNormalColor({
+            textColor.r,
+            textColor.g,
+            textColor.b});
 
-        inputNode->setLabelPlaceholderColor({placeholderColor.r,
-                                             placeholderColor.g,
-                                             placeholderColor.b});
+        inputNode->setLabelPlaceholderColor({
+            placeholderColor.r,
+            placeholderColor.g,
+            placeholderColor.b});
 
         auto label =
             inputNode->getTextLabel();
