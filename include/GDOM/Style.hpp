@@ -11,10 +11,11 @@ namespace gdom
     struct Style
     {
         std::string display = "block";
-
         std::string flexDirection = "row";
         std::string justifyContent = "flex-start";
         std::string alignItems = "flex-start";
+
+        std::string overflow = "visible";
 
         ccColor4B backgroundColor{
             0,
