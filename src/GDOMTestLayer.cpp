@@ -151,20 +151,15 @@ void GDOMTestLayer::buildTestUI()
     auto root =
         document->createElement("div");
 
-    root->style.left = "30px";
-    root->style.top = "20px";
-
-    root->style.width =
-        "calc(100% - 60px)";
-
-    root->style.height =
-        "calc(100% - 40px)";
+    root->style.left = "20px";
+    root->style.top = "15px";
+    root->style.width = "520px";
+    root->style.height = "270px";
 
     root->style.display = "flex";
     root->style.flexDirection = "column";
-
-    root->style.padding = "14px";
-    root->style.gap = "10px";
+    root->style.gap = "4px";
+    root->style.padding = "8px";
 
     root->style.backgroundColor = {
         20,
@@ -172,187 +167,179 @@ void GDOMTestLayer::buildTestUI()
         26,
         255};
 
-    root->style.borderRadius =
-        "12px";
-
     auto title =
         document->createElement("span");
 
     title->textContent =
-        "CALC() TEST";
+        "LENGTH RESOLVER TEST";
 
     title->style.width = "auto";
     title->style.height = "auto";
-    title->style.fontSize = "18px";
+    title->style.fontSize = "14px";
     title->style.flexShrink = 0.f;
 
     root->appendChild(title);
 
-    auto fullMinus =
-        document->createElement("div");
-
-    fullMinus->style.width =
-        "calc(100% - 40px)";
-
-    fullMinus->style.height =
-        "40px";
-
-    fullMinus->style.flexShrink = 0.f;
-
-    fullMinus->style.backgroundColor = {
-        70,
-        130,
-        255,
-        255};
-
-    root->appendChild(fullMinus);
-
-    auto halfPlus =
-        document->createElement("div");
-
-    halfPlus->style.width =
-        "calc(50% + 40px)";
-
-    halfPlus->style.height =
-        "40px";
-
-    halfPlus->style.flexShrink = 0.f;
-
-    halfPlus->style.backgroundColor = {
-        80,
-        210,
-        130,
-        255};
-
-    root->appendChild(halfPlus);
-
-    auto remTest =
-        document->createElement("div");
-
-    remTest->style.width =
-        "calc(100% - 20rem)";
-
-    remTest->style.height =
-        "40px";
-
-    remTest->style.flexShrink = 0.f;
-
-    remTest->style.backgroundColor = {
-        230,
-        100,
-        90,
-        255};
-
-    root->appendChild(remTest);
-
-    auto row =
-        document->createElement("div");
-
-    row->style.width = "100%";
-    row->style.height = "60px";
-
-    row->style.display = "flex";
-    row->style.flexDirection = "row";
-    row->style.gap = "8px";
-    row->style.flexShrink = 0.f;
-
-    auto left =
-        document->createElement("div");
-
-    left->style.width =
-        "calc(50% - 4px)";
-
-    left->style.height =
-        "60px";
-
-    left->style.backgroundColor = {
-        160,
-        90,
-        220,
-        255};
-
-    auto right =
-        document->createElement("div");
-
-    right->style.width =
-        "calc(50% - 4px)";
-
-    right->style.height =
-        "60px";
-
-    right->style.backgroundColor = {
-        220,
-        150,
-        60,
-        255};
-
-    row->appendChild(left);
-    row->appendChild(right);
-
-    root->appendChild(row);
-
-    auto dynamic =
-        document->createElement("div");
-
-    dynamic->style.width =
-        "calc(100% - 100px)";
-
-    dynamic->style.height =
-        "45px";
-
-    dynamic->style.flexShrink = 0.f;
-
-    dynamic->style.backgroundColor = {
-        70,
-        180,
-        200,
-        255};
-
-    root->appendChild(dynamic);
-
-    auto toggle =
-        document->createElement("button");
-
-    toggle->textContent =
-        "TOGGLE CALC";
-
-    toggle->style.width =
-        "160px";
-
-    toggle->style.height =
-        "36px";
-
-    toggle->style.flexShrink = 0.f;
-
-    toggle->style.backgroundColor = {
-        100,
-        80,
-        220,
-        255};
-
-    toggle->style.borderRadius =
-        "7px";
-
-    auto changed =
-        new bool(false);
-
-    toggle->onClick =
+    auto createTest =
         [document,
-         dynamic,
-         changed]()
+         root](
+            const std::string &labelText,
+            const std::string &width,
+            ccColor4B color)
     {
-        *changed =
-            !*changed;
+        auto row =
+            document->createElement("div");
 
-        dynamic->style.width =
-            *changed
-                ? "calc(50% + 60px)"
-                : "calc(100% - 100px)";
+        row->style.width = "500px";
+        row->style.height = "16px";
+        row->style.flexShrink = 0.f;
 
-        document->update();
+        row->style.display = "flex";
+        row->style.flexDirection = "row";
+        row->style.alignItems = "center";
+        row->style.gap = "4px";
+
+        auto label =
+            document->createElement("span");
+
+        label->textContent =
+            labelText;
+
+        label->style.width = "155px";
+        label->style.height = "auto";
+        label->style.fontSize = "7px";
+        label->style.flexShrink = 0.f;
+
+        auto viewport =
+            document->createElement("div");
+
+        viewport->style.width = "330px";
+        viewport->style.height = "12px";
+        viewport->style.flexShrink = 0.f;
+
+        viewport->style.backgroundColor = {
+            35,
+            35,
+            45,
+            255};
+
+        auto block =
+            document->createElement("div");
+
+        block->style.width =
+            width;
+
+        block->style.height =
+            "12px";
+
+        block->style.flexShrink = 0.f;
+
+        block->style.backgroundColor =
+            color;
+
+        viewport->appendChild(block);
+
+        row->appendChild(label);
+        row->appendChild(viewport);
+
+        root->appendChild(row);
     };
 
-    root->appendChild(toggle);
+    createTest(
+        "100px",
+        "100px",
+        {70, 130, 255, 255});
+
+    createTest(
+        "50%",
+        "50%",
+        {80, 210, 130, 255});
+
+    createTest(
+        "2rem",
+        "2rem",
+        {230, 100, 90, 255});
+
+    createTest(
+        "unitless 100",
+        "100",
+        {180, 100, 220, 255});
+
+    createTest(
+        "calc(100%-20px)",
+        "calc(100% - 20px)",
+        {220, 150, 60, 255});
+
+    createTest(
+        "calc(50%+20px)",
+        "calc(50% + 20px)",
+        {60, 180, 210, 255});
+
+    createTest(
+        "calc(-20px+50%)",
+        "calc(-20px + 50%)",
+        {200, 90, 160, 255});
+
+    createTest(
+        "100%-20px-10px",
+        "calc(100% - 20px - 10px)",
+        {100, 180, 100, 255});
+
+    createTest(
+        "100%+10px-2rem+5px",
+        "calc(100% + 10px - 2rem + 5px)",
+        {210, 120, 80, 255});
+
+    createTest(
+        "100% - -20px",
+        "calc(100% - -20px)",
+        {100, 140, 230, 255});
+
+    createTest(
+        "100% + (-20px)",
+        "calc(100% + (-20px))",
+        {200, 110, 190, 255});
+
+    createTest(
+        "nested calc",
+        "calc(100% - calc(20px + 10px))",
+        {100, 210, 180, 255});
+
+    createTest(
+        "CALC + PX uppercase",
+        "CALC(100% - 20PX)",
+        {230, 170, 90, 255});
+
+    createTest(
+        "Calc with spaces",
+        "Calc ( 100% - 20px )",
+        {140, 110, 230, 255});
+
+    //
+    // Invalid expressions
+    //
+    // These should resolve to 0 and produce warnings.
+    //
+
+    createTest(
+        "INVALID: abc",
+        "calc(100% - abc)",
+        {255, 70, 70, 255});
+
+    createTest(
+        "INVALID: missing rhs",
+        "calc(100% -)",
+        {255, 70, 70, 255});
+
+    createTest(
+        "INVALID: vw",
+        "calc(100% + 20vw)",
+        {255, 70, 70, 255});
+
+    createTest(
+        "INVALID: multiply",
+        "calc(100% * 2)",
+        {255, 70, 70, 255});
 
     document->appendChild(root);
     document->render();

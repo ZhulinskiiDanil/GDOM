@@ -1,4 +1,5 @@
 #include <GDOM/LengthResolver.hpp>
+#include <GDOM/LengthExpressionResolver.hpp>
 
 #include <Geode/Geode.hpp>
 
@@ -10,259 +11,110 @@ using namespace geode::prelude;
 namespace gdom
 {
 
-  std::string LengthResolver::trim(
-      const std::string &value)
-  {
-    auto start =
-        std::find_if_not(
-            value.begin(),
-            value.end(),
-            [](unsigned char c)
+    std::string LengthResolver::trim(
+        const std::string &value)
+    {
+        auto start =
+            std::find_if_not(
+                value.begin(),
+                value.end(),
+                [](unsigned char c)
+                {
+                    return std::isspace(c);
+                });
+
+        auto end =
+            std::find_if_not(
+                value.rbegin(),
+                value.rend(),
+                [](unsigned char c)
+                {
+                    return std::isspace(c);
+                })
+                .base();
+
+        if (start >= end)
+        {
+            return "";
+        }
+
+        return std::string(
+            start,
+            end);
+    }
+
+    bool LengthResolver::equalsIgnoreCase(
+        const std::string &left,
+        const std::string &right)
+    {
+        if (
+            left.size() !=
+            right.size())
+        {
+            return false;
+        }
+
+        for (
+            std::size_t i = 0;
+            i < left.size();
+            ++i)
+        {
+            const auto leftChar =
+                static_cast<unsigned char>(
+                    left[i]);
+
+            const auto rightChar =
+                static_cast<unsigned char>(
+                    right[i]);
+
+            if (
+                std::tolower(leftChar) !=
+                std::tolower(rightChar))
             {
-              return std::isspace(c);
-            });
+                return false;
+            }
+        }
 
-    auto end =
-        std::find_if_not(
-            value.rbegin(),
-            value.rend(),
-            [](unsigned char c)
-            {
-              return std::isspace(c);
-            })
-            .base();
-
-    if (start >= end)
-    {
-      return "";
+        return true;
     }
 
-    return std::string(
-        start,
-        end);
-  }
-
-  bool LengthResolver::endsWith(
-      const std::string &value,
-      const std::string &suffix)
-  {
-    if (value.size() < suffix.size())
+    bool LengthResolver::isAuto(
+        const std::string &rawValue)
     {
-      return false;
+        return equalsIgnoreCase(
+            trim(rawValue),
+            "auto");
     }
 
-    return value.compare(
-               value.size() - suffix.size(),
-               suffix.size(),
-               suffix) == 0;
-  }
-
-  bool LengthResolver::isAuto(
-      const std::string &rawValue)
-  {
-    return trim(rawValue) ==
-           "auto";
-  }
-
-  float LengthResolver::resolve(
-      const std::string &rawValue,
-      float referenceSize)
-  {
-    const auto value =
-        trim(rawValue);
-
-    if (
-        value.empty() ||
-        value == "auto")
+    float LengthResolver::resolve(
+        const std::string &rawValue,
+        float referenceSize)
     {
-      return 0.f;
+        const auto value =
+            trim(rawValue);
+
+        if (
+            value.empty() ||
+            isAuto(value))
+        {
+            return 0.f;
+        }
+
+        auto result =
+            LengthExpressionResolver::resolve(
+                value,
+                referenceSize);
+
+        if (!result.has_value())
+        {
+            log::warn(
+                "GDOM: invalid length expression '{}'",
+                rawValue);
+
+            return 0.f;
+        }
+
+        return *result;
     }
-
-    if (
-        value.size() >= 6 &&
-        value.starts_with("calc(") &&
-        value.ends_with(")"))
-    {
-      return resolveCalc(
-          value,
-          referenceSize);
-    }
-
-    return resolveSingle(
-        value,
-        referenceSize);
-  }
-
-  float LengthResolver::resolveSingle(
-      const std::string &rawValue,
-      float referenceSize)
-  {
-    const auto value =
-        trim(rawValue);
-
-    if (value.empty())
-    {
-      return 0.f;
-    }
-
-    std::string numberPart =
-        value;
-
-    float multiplier =
-        1.f;
-
-    if (
-        endsWith(
-            value,
-            "px"))
-    {
-      numberPart =
-          value.substr(
-              0,
-              value.size() - 2);
-    }
-    else if (
-        endsWith(
-            value,
-            "rem"))
-    {
-      numberPart =
-          value.substr(
-              0,
-              value.size() - 3);
-
-      multiplier =
-          10.f;
-    }
-    else if (
-        endsWith(
-            value,
-            "%"))
-    {
-      numberPart =
-          value.substr(
-              0,
-              value.size() - 1);
-
-      multiplier =
-          referenceSize /
-          100.f;
-    }
-
-    auto number =
-        numFromString<float>(
-            trim(
-                numberPart));
-
-    if (number.isErr())
-    {
-      log::warn(
-          "GDOM: invalid length '{}'",
-          rawValue);
-
-      return 0.f;
-    }
-
-    return number.unwrap() *
-           multiplier;
-  }
-
-  float LengthResolver::resolveCalc(
-      const std::string &rawValue,
-      float referenceSize)
-  {
-    auto expression =
-        trim(
-            rawValue.substr(
-                5,
-                rawValue.size() - 6));
-
-    if (expression.empty())
-    {
-      log::warn(
-          "GDOM: empty calc expression '{}'",
-          rawValue);
-
-      return 0.f;
-    }
-
-    std::size_t operatorPosition =
-        std::string::npos;
-
-    char operation =
-        '\0';
-
-    for (
-        std::size_t i = 1;
-        i < expression.size();
-        ++i)
-    {
-      const char c =
-          expression[i];
-
-      if (
-          c == '+' ||
-          c == '-')
-      {
-        operatorPosition =
-            i;
-
-        operation =
-            c;
-
-        break;
-      }
-    }
-
-    if (
-        operatorPosition ==
-        std::string::npos)
-    {
-      return resolveSingle(
-          expression,
-          referenceSize);
-    }
-
-    const auto leftPart =
-        trim(
-            expression.substr(
-                0,
-                operatorPosition));
-
-    const auto rightPart =
-        trim(
-            expression.substr(
-                operatorPosition + 1));
-
-    if (
-        leftPart.empty() ||
-        rightPart.empty())
-    {
-      log::warn(
-          "GDOM: invalid calc expression '{}'",
-          rawValue);
-
-      return 0.f;
-    }
-
-    const float left =
-        resolveSingle(
-            leftPart,
-            referenceSize);
-
-    const float right =
-        resolveSingle(
-            rightPart,
-            referenceSize);
-
-    if (operation == '+')
-    {
-      return left +
-             right;
-    }
-
-    return left -
-           right;
-  }
 
 }
