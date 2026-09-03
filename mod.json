@@ -1,0 +1,17 @@
+{
+  "geode": "5.8.2",
+  "gd": {
+    "win": "2.2081",
+    "android": "2.2081",
+    "mac": "2.2081",
+    "ios": "2.2081"
+  },
+  "id": "zhuliss.gdom",
+  "name": "GDOM",
+  "version": "v0.1.0",
+  "developer": "Zhuliss",
+  "description": "Minimal DOM-like UI layer for Geode.",
+  "links": {
+    "source": "https://github.com/zhuliss/gdom"
+  }
+}
