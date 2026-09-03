@@ -34,6 +34,16 @@ namespace gdom
                 "flex-start",
                 DirtyFlags::Layout};
 
+        ReactiveProperty<float>
+            flexGrow{
+                0.f,
+                DirtyFlags::Layout};
+
+        ReactiveProperty<float>
+            flexShrink{
+                1.f,
+                DirtyFlags::Layout};
+
         ReactiveProperty<std::string>
             overflow{
                 "visible",
@@ -177,6 +187,10 @@ namespace gdom
             flexDirection.bind(callback);
             justifyContent.bind(callback);
             alignItems.bind(callback);
+
+            flexGrow.bind(callback);
+            flexShrink.bind(callback);
+
             overflow.bind(callback);
 
             left.bind(callback);

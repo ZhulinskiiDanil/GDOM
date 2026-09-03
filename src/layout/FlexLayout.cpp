@@ -5,17 +5,433 @@
 #include <GDOM/BoxResolver.hpp>
 
 #include <algorithm>
+#include <vector>
 
 using namespace geode::prelude;
 
 namespace gdom::layout
 {
 
+    namespace
+    {
+
+        struct FlexMargin
+        {
+            float top = 0.f;
+            float right = 0.f;
+            float bottom = 0.f;
+            float left = 0.f;
+        };
+
+        struct FlexItem
+        {
+            HTMLElement *element =
+                nullptr;
+
+            FlexMargin margin;
+
+            CCSize baseSize{
+                0.f,
+                0.f};
+
+            CCSize finalSize{
+                0.f,
+                0.f};
+
+            float grow =
+                0.f;
+
+            float shrink =
+                1.f;
+
+            bool frozen =
+                false;
+        };
+
+        float getMainSize(
+            const CCSize &size,
+            bool isRow)
+        {
+            return isRow
+                       ? size.width
+                       : size.height;
+        }
+
+        void setMainSize(
+            CCSize &size,
+            bool isRow,
+            float value)
+        {
+            value =
+                std::max(
+                    0.f,
+                    value);
+
+            if (isRow)
+            {
+                size.width =
+                    value;
+            }
+            else
+            {
+                size.height =
+                    value;
+            }
+        }
+
+        float getMainMargin(
+            const FlexMargin &margin,
+            bool isRow)
+        {
+            if (isRow)
+            {
+                return margin.left +
+                       margin.right;
+            }
+
+            return margin.top +
+                   margin.bottom;
+        }
+
+        float clampMainSize(
+            HTMLElement *element,
+            float value,
+            bool isRow,
+            const CCSize &containingSize)
+        {
+            if (!element)
+            {
+                return std::max(
+                    0.f,
+                    value);
+            }
+
+            value =
+                std::max(
+                    0.f,
+                    value);
+
+            const auto &minValue =
+                isRow
+                    ? element->style.minWidth.get()
+                    : element->style.minHeight.get();
+
+            const auto &maxValue =
+                isRow
+                    ? element->style.maxWidth.get()
+                    : element->style.maxHeight.get();
+
+            const float reference =
+                isRow
+                    ? containingSize.width
+                    : containingSize.height;
+
+            if (!minValue.empty())
+            {
+                value =
+                    std::max(
+                        value,
+                        LengthResolver::resolve(
+                            minValue,
+                            reference));
+            }
+
+            if (!maxValue.empty())
+            {
+                value =
+                    std::min(
+                        value,
+                        LengthResolver::resolve(
+                            maxValue,
+                            reference));
+            }
+
+            return std::max(
+                0.f,
+                value);
+        }
+
+        float calculateOccupiedMain(
+            const std::vector<FlexItem> &items,
+            bool isRow,
+            float gap)
+        {
+            float occupied =
+                0.f;
+
+            for (const auto &item :
+                 items)
+            {
+                occupied +=
+                    getMainSize(
+                        item.finalSize,
+                        isRow) +
+                    getMainMargin(
+                        item.margin,
+                        isRow);
+            }
+
+            if (items.size() > 1)
+            {
+                occupied +=
+                    gap *
+                    static_cast<float>(
+                        items.size() - 1);
+            }
+
+            return occupied;
+        }
+
+        void distributeGrow(
+            std::vector<FlexItem> &items,
+            bool isRow,
+            float availableMainSize,
+            float gap,
+            const CCSize &containingSize)
+        {
+            constexpr int maxIterations =
+                16;
+
+            for (
+                int iteration = 0;
+                iteration < maxIterations;
+                ++iteration)
+            {
+                const float occupied =
+                    calculateOccupiedMain(
+                        items,
+                        isRow,
+                        gap);
+
+                const float freeSpace =
+                    availableMainSize -
+                    occupied;
+
+                if (freeSpace <= 0.01f)
+                {
+                    break;
+                }
+
+                float totalGrow =
+                    0.f;
+
+                for (const auto &item :
+                     items)
+                {
+                    if (
+                        item.element &&
+                        !item.frozen &&
+                        item.grow > 0.f)
+                    {
+                        totalGrow +=
+                            item.grow;
+                    }
+                }
+
+                if (totalGrow <= 0.f)
+                {
+                    break;
+                }
+
+                bool anyClamped =
+                    false;
+
+                for (auto &item :
+                     items)
+                {
+                    if (
+                        !item.element ||
+                        item.frozen ||
+                        item.grow <= 0.f)
+                    {
+                        continue;
+                    }
+
+                    const float current =
+                        getMainSize(
+                            item.finalSize,
+                            isRow);
+
+                    const float share =
+                        freeSpace *
+                        (item.grow /
+                         totalGrow);
+
+                    const float requested =
+                        current +
+                        share;
+
+                    const float clamped =
+                        clampMainSize(
+                            item.element,
+                            requested,
+                            isRow,
+                            containingSize);
+
+                    setMainSize(
+                        item.finalSize,
+                        isRow,
+                        clamped);
+
+                    if (
+                        std::abs(
+                            clamped -
+                            requested) >
+                        0.01f)
+                    {
+                        item.frozen =
+                            true;
+
+                        anyClamped =
+                            true;
+                    }
+                }
+
+                if (!anyClamped)
+                {
+                    break;
+                }
+            }
+        }
+
+        void distributeShrink(
+            std::vector<FlexItem> &items,
+            bool isRow,
+            float availableMainSize,
+            float gap,
+            const CCSize &containingSize)
+        {
+            constexpr int maxIterations =
+                16;
+
+            for (
+                int iteration = 0;
+                iteration < maxIterations;
+                ++iteration)
+            {
+                const float occupied =
+                    calculateOccupiedMain(
+                        items,
+                        isRow,
+                        gap);
+
+                const float overflow =
+                    occupied -
+                    availableMainSize;
+
+                if (overflow <= 0.01f)
+                {
+                    break;
+                }
+
+                float totalWeightedShrink =
+                    0.f;
+
+                for (const auto &item :
+                     items)
+                {
+                    if (
+                        !item.element ||
+                        item.frozen ||
+                        item.shrink <= 0.f)
+                    {
+                        continue;
+                    }
+
+                    const float baseMain =
+                        getMainSize(
+                            item.baseSize,
+                            isRow);
+
+                    totalWeightedShrink +=
+                        item.shrink *
+                        baseMain;
+                }
+
+                if (totalWeightedShrink <= 0.f)
+                {
+                    break;
+                }
+
+                bool anyClamped =
+                    false;
+
+                for (auto &item :
+                     items)
+                {
+                    if (
+                        !item.element ||
+                        item.frozen ||
+                        item.shrink <= 0.f)
+                    {
+                        continue;
+                    }
+
+                    const float baseMain =
+                        getMainSize(
+                            item.baseSize,
+                            isRow);
+
+                    const float current =
+                        getMainSize(
+                            item.finalSize,
+                            isRow);
+
+                    const float weightedFactor =
+                        item.shrink *
+                        baseMain;
+
+                    const float share =
+                        overflow *
+                        (weightedFactor /
+                         totalWeightedShrink);
+
+                    const float requested =
+                        current -
+                        share;
+
+                    const float clamped =
+                        clampMainSize(
+                            item.element,
+                            requested,
+                            isRow,
+                            containingSize);
+
+                    setMainSize(
+                        item.finalSize,
+                        isRow,
+                        clamped);
+
+                    if (
+                        std::abs(
+                            clamped -
+                            requested) >
+                        0.01f)
+                    {
+                        item.frozen =
+                            true;
+
+                        anyClamped =
+                            true;
+                    }
+                }
+
+                if (!anyClamped)
+                {
+                    break;
+                }
+            }
+        }
+
+    }
+
     void FlexLayout::render(
         HTMLElement *element,
         CCNode *node)
     {
-        if (!element || !node)
+        if (
+            !element ||
+            !node)
         {
             return;
         }
@@ -24,7 +440,8 @@ namespace gdom::layout
             element->getContentSize();
 
         const bool isRow =
-            element->style.flexDirection == "row";
+            element->style.flexDirection ==
+            "row";
 
         const auto padding =
             BoxResolver::resolve(
@@ -50,31 +467,37 @@ namespace gdom::layout
                     padding.top -
                     padding.bottom);
 
-        const float gap =
-            LengthResolver::resolve(
-                element->style.gap,
-                isRow
-                    ? innerWidth
-                    : innerHeight);
-
-        float childrenMainSize =
-            0.f;
-
-        int childCount =
-            0;
-
         const CCSize containingSize{
             innerWidth,
             innerHeight};
 
-        for (auto *child : element->m_children)
+        const float availableMainSize =
+            isRow
+                ? innerWidth
+                : innerHeight;
+
+        const float gap =
+            std::max(
+                0.f,
+                LengthResolver::resolve(
+                    element->style.gap,
+                    availableMainSize));
+
+        std::vector<FlexItem>
+            items;
+
+        items.reserve(
+            element->m_children.size());
+
+        for (auto *child :
+             element->m_children)
         {
             if (!child)
             {
                 continue;
             }
 
-            const auto margin =
+            const auto resolvedMargin =
                 BoxResolver::resolve(
                     child->style.margin,
                     child->style.marginTop,
@@ -83,6 +506,12 @@ namespace gdom::layout
                     child->style.marginLeft,
                     innerWidth,
                     innerHeight);
+
+            FlexMargin margin{
+                resolvedMargin.top,
+                resolvedMargin.right,
+                resolvedMargin.bottom,
+                resolvedMargin.left};
 
             const CCSize availableSize{
                 std::max(
@@ -97,48 +526,83 @@ namespace gdom::layout
                         margin.top -
                         margin.bottom)};
 
-            const auto childSize =
+            const auto baseSize =
                 child->resolveSize(
                     containingSize,
                     availableSize);
 
-            if (isRow)
-            {
-                childrenMainSize +=
-                    margin.left +
-                    childSize.width +
-                    margin.right;
-            }
-            else
-            {
-                childrenMainSize +=
-                    margin.top +
-                    childSize.height +
-                    margin.bottom;
-            }
+            FlexItem item;
 
-            childCount++;
+            item.element =
+                child;
+
+            item.margin =
+                margin;
+
+            item.baseSize =
+                baseSize;
+
+            item.finalSize =
+                baseSize;
+
+            item.grow =
+                std::max(
+                    0.f,
+                    child->style.flexGrow.get());
+
+            item.shrink =
+                std::max(
+                    0.f,
+                    child->style.flexShrink.get());
+
+            items.push_back(
+                item);
         }
 
-        const float baseGapSize =
-            childCount > 1
-                ? gap *
-                      static_cast<float>(
-                          childCount - 1)
-                : 0.f;
+        const float initialOccupied =
+            calculateOccupiedMain(
+                items,
+                isRow,
+                gap);
 
-        const float totalMainSize =
-            childrenMainSize +
-            baseGapSize;
+        if (
+            initialOccupied <
+            availableMainSize)
+        {
+            distributeGrow(
+                items,
+                isRow,
+                availableMainSize,
+                gap,
+                containingSize);
+        }
+        else if (
+            initialOccupied >
+            availableMainSize)
+        {
+            distributeShrink(
+                items,
+                isRow,
+                availableMainSize,
+                gap,
+                containingSize);
+        }
 
-        const float availableMainSize =
-            isRow
-                ? innerWidth
-                : innerHeight;
+        const int childCount =
+            static_cast<int>(
+                items.size());
 
-        const float freeSpace =
-            availableMainSize -
-            totalMainSize;
+        const float finalOccupied =
+            calculateOccupiedMain(
+                items,
+                isRow,
+                gap);
+
+        const float justifyFreeSpace =
+            std::max(
+                0.f,
+                availableMainSize -
+                    finalOccupied);
 
         float mainOffset =
             0.f;
@@ -149,53 +613,63 @@ namespace gdom::layout
         const auto &justifyContent =
             element->style.justifyContent;
 
-        if (justifyContent == "center")
+        if (
+            justifyContent ==
+            "center")
         {
             mainOffset =
-                freeSpace / 2.f;
+                justifyFreeSpace /
+                2.f;
         }
         else if (
-            justifyContent == "flex-end")
+            justifyContent ==
+            "flex-end")
         {
             mainOffset =
-                freeSpace;
+                justifyFreeSpace;
         }
         else if (
-            justifyContent == "space-between" &&
+            justifyContent ==
+                "space-between" &&
             childCount > 1)
         {
             distributedGap =
                 gap +
-                freeSpace /
+                justifyFreeSpace /
                     static_cast<float>(
                         childCount - 1);
         }
         else if (
-            justifyContent == "space-around" &&
+            justifyContent ==
+                "space-around" &&
             childCount > 0)
         {
             const float space =
-                freeSpace /
+                justifyFreeSpace /
                 static_cast<float>(
                     childCount);
 
             distributedGap =
-                gap + space;
+                gap +
+                space;
 
             mainOffset =
-                space / 2.f;
+                space /
+                2.f;
         }
         else if (
-            justifyContent == "space-evenly" &&
+            justifyContent ==
+                "space-evenly" &&
             childCount > 0)
         {
             const float space =
-                freeSpace /
+                justifyFreeSpace /
                 static_cast<float>(
                     childCount + 1);
 
             distributedGap =
-                gap + space;
+                gap +
+                space;
 
             mainOffset =
                 space;
@@ -204,43 +678,24 @@ namespace gdom::layout
         float currentMain =
             mainOffset;
 
-        for (auto *child : element->m_children)
+        for (
+            std::size_t index = 0;
+            index < items.size();
+            ++index)
         {
+            auto &item =
+                items[index];
+
+            auto *child =
+                item.element;
+
             if (!child)
             {
                 continue;
             }
 
-            const auto margin =
-                BoxResolver::resolve(
-                    child->style.margin,
-                    child->style.marginTop,
-                    child->style.marginRight,
-                    child->style.marginBottom,
-                    child->style.marginLeft,
-                    innerWidth,
-                    innerHeight);
-
-            const CCSize availableSize{
-                std::max(
-                    0.f,
-                    innerWidth -
-                        margin.left -
-                        margin.right),
-
-                std::max(
-                    0.f,
-                    innerHeight -
-                        margin.top -
-                        margin.bottom)};
-
-            const auto childSize =
-                child->resolveSize(
-                    containingSize,
-                    availableSize);
-
             child->setResolvedSize(
-                childSize);
+                item.finalSize);
 
             float x =
                 padding.left;
@@ -251,7 +706,7 @@ namespace gdom::layout
             if (isRow)
             {
                 currentMain +=
-                    margin.left;
+                    item.margin.left;
 
                 x +=
                     currentMain;
@@ -262,7 +717,7 @@ namespace gdom::layout
                 {
                     y +=
                         (innerHeight -
-                         childSize.height) /
+                         item.finalSize.height) /
                         2.f;
                 }
                 else if (
@@ -271,19 +726,19 @@ namespace gdom::layout
                 {
                     y +=
                         innerHeight -
-                        childSize.height -
-                        margin.bottom;
+                        item.finalSize.height -
+                        item.margin.bottom;
                 }
                 else
                 {
                     y +=
-                        margin.top;
+                        item.margin.top;
                 }
             }
             else
             {
                 currentMain +=
-                    margin.top;
+                    item.margin.top;
 
                 y +=
                     currentMain;
@@ -294,7 +749,7 @@ namespace gdom::layout
                 {
                     x +=
                         (innerWidth -
-                         childSize.width) /
+                         item.finalSize.width) /
                         2.f;
                 }
                 else if (
@@ -303,21 +758,21 @@ namespace gdom::layout
                 {
                     x +=
                         innerWidth -
-                        childSize.width -
-                        margin.right;
+                        item.finalSize.width -
+                        item.margin.right;
                 }
                 else
                 {
                     x +=
-                        margin.left;
+                        item.margin.left;
                 }
             }
 
-            CCPoint flowOffset{
+            const CCPoint flowOffset{
                 x,
                 y};
 
-            auto childNode =
+            auto *childNode =
                 child->render(
                     parentSize,
                     flowOffset);
@@ -331,15 +786,21 @@ namespace gdom::layout
             if (isRow)
             {
                 currentMain +=
-                    childSize.width +
-                    margin.right +
-                    distributedGap;
+                    item.finalSize.width +
+                    item.margin.right;
             }
             else
             {
                 currentMain +=
-                    childSize.height +
-                    margin.bottom +
+                    item.finalSize.height +
+                    item.margin.bottom;
+            }
+
+            if (
+                index + 1 <
+                items.size())
+            {
+                currentMain +=
                     distributedGap;
             }
         }
