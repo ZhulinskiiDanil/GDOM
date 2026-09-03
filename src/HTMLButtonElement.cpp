@@ -71,7 +71,7 @@ namespace gdom
     {
         auto label =
             CCLabelBMFont::create(
-                textContent.c_str(),
+                textContent.get().c_str(),
                 "bigFont.fnt");
 
         if (!label)
@@ -179,12 +179,6 @@ namespace gdom
         const auto size =
             getContentSize();
 
-        //
-        // Normal GDOM container.
-        //
-        // This node participates in layout.
-        //
-
         auto container =
             CCNode::create();
 
@@ -214,16 +208,13 @@ namespace gdom
                                     flowOffset.y -
                                     top});
 
-        //
-        // Button visual content.
-        //
-
         auto buttonContent =
             CCNode::create();
 
         if (!buttonContent)
         {
-            return container;
+            return finishRender(
+                container);
         }
 
         buttonContent->setContentSize(
@@ -231,10 +222,6 @@ namespace gdom
 
         buttonContent->setAnchorPoint({0.f,
                                        0.f});
-
-        //
-        // Background + border
-        //
 
         const float borderWidth =
             std::max(
@@ -254,40 +241,36 @@ namespace gdom
                         size.width,
                         size.height)));
 
-        auto background =
+        m_background =
             RoundedRectNode::create(
                 size,
-                style.backgroundColor,
+                style.backgroundColor.get(),
                 borderRadius,
                 borderWidth,
-                style.borderColor);
+                style.borderColor.get());
 
-        if (background)
+        if (m_background)
         {
-            background->setAnchorPoint({0.f,
-                                        0.f});
+            m_background->setAnchorPoint({0.f,
+                                          0.f});
 
-            background->setPosition({0.f,
-                                     0.f});
+            m_background->setPosition({0.f,
+                                       0.f});
 
             buttonContent->addChild(
-                background,
+                m_background,
                 0);
         }
 
-        //
-        // Text
-        //
-
-        auto label =
+        m_label =
             CCLabelBMFont::create(
-                textContent.c_str(),
+                textContent.get().c_str(),
                 "bigFont.fnt");
 
-        if (label)
+        if (m_label)
         {
             const auto rawSize =
-                label->getContentSize();
+                m_label->getContentSize();
 
             if (rawSize.height > 0.f)
             {
@@ -296,32 +279,23 @@ namespace gdom
                         style.fontSize,
                         rawSize.height);
 
-                label->setScale(
+                m_label->setScale(
                     requestedFontSize /
                     rawSize.height);
             }
 
-            label->setColor({style.color.r,
-                             style.color.g,
-                             style.color.b});
+            m_label->setAnchorPoint({0.5f,
+                                     0.5f});
 
-            label->setOpacity(
-                style.color.a);
-
-            label->setAnchorPoint({0.5f,
-                                   0.5f});
-
-            label->setPosition({size.width / 2.f,
-                                size.height / 2.f});
+            m_label->setPosition({size.width / 2.f,
+                                  size.height / 2.f});
 
             buttonContent->addChild(
-                label,
+                m_label,
                 1);
         }
 
-        //
-        // Callback target
-        //
+        applyPaint();
 
         auto callbackTarget =
             ButtonCallbackTarget::create(
@@ -329,24 +303,20 @@ namespace gdom
 
         if (!callbackTarget)
         {
-            return container;
+            return finishRender(
+                container);
         }
 
         container->addChild(
             callbackTarget);
-
-        //
-        // Menu is now INTERNAL.
-        //
-        // It no longer controls GDOM layout position.
-        //
 
         auto menu =
             CCMenu::create();
 
         if (!menu)
         {
-            return container;
+            return finishRender(
+                container);
         }
 
         menu->setContentSize(
@@ -358,10 +328,6 @@ namespace gdom
         menu->setPosition({0.f,
                            0.f});
 
-        //
-        // Clickable item
-        //
-
         auto item =
             CCMenuItemSpriteExtra::create(
                 buttonContent,
@@ -371,7 +337,8 @@ namespace gdom
 
         if (!item)
         {
-            return container;
+            return finishRender(
+                container);
         }
 
         item->setAnchorPoint({0.5f,
@@ -387,7 +354,48 @@ namespace gdom
             menu,
             10);
 
-        return container;
+        return finishRender(
+            container);
+    }
+
+    void HTMLButtonElement::applyPaint()
+    {
+        if (m_background)
+        {
+            m_background->setFillColor(
+                style.backgroundColor.get());
+
+            m_background->setBorderColor(
+                style.borderColor.get());
+
+            const auto size =
+                getContentSize();
+
+            const float borderRadius =
+                std::max(
+                    0.f,
+                    LengthResolver::resolve(
+                        style.borderRadius,
+                        std::min(
+                            size.width,
+                            size.height)));
+
+            m_background->setRadius(
+                borderRadius);
+        }
+
+        if (m_label)
+        {
+            const auto &color =
+                style.color.get();
+
+            m_label->setColor({color.r,
+                               color.g,
+                               color.b});
+
+            m_label->setOpacity(
+                color.a);
+        }
     }
 
 }

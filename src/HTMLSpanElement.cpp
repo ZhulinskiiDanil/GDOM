@@ -18,12 +18,14 @@ namespace gdom
     {
         auto label =
             CCLabelBMFont::create(
-                textContent.c_str(),
+                textContent.get().c_str(),
                 "bigFont.fnt");
 
         if (!label)
         {
-            return {0.f, 0.f};
+            return {
+                0.f,
+                0.f};
         }
 
         const auto rawSize =
@@ -31,7 +33,9 @@ namespace gdom
 
         if (rawSize.height <= 0.f)
         {
-            return {0.f, 0.f};
+            return {
+                0.f,
+                0.f};
         }
 
         const float requestedFontSize =
@@ -63,9 +67,12 @@ namespace gdom
         const auto textSize =
             measureText();
 
-        float width = 0.f;
+        float width =
+            0.f;
 
-        if (LengthResolver::isAuto(style.width))
+        if (
+            LengthResolver::isAuto(
+                style.width))
         {
             width =
                 textSize.width;
@@ -78,9 +85,12 @@ namespace gdom
                     containingSize.width);
         }
 
-        float height = 0.f;
+        float height =
+            0.f;
 
-        if (LengthResolver::isAuto(style.height))
+        if (
+            LengthResolver::isAuto(
+                style.height))
         {
             height =
                 textSize.height;
@@ -94,8 +104,13 @@ namespace gdom
         }
 
         return {
-            std::max(0.f, width),
-            std::max(0.f, height)};
+            std::max(
+                0.f,
+                width),
+
+            std::max(
+                0.f,
+                height)};
     }
 
     CCNode *HTMLSpanElement::render(
@@ -105,7 +120,8 @@ namespace gdom
         if (!hasResolvedSize())
         {
             setResolvedSize(
-                resolveSize(parentSize));
+                resolveSize(
+                    parentSize));
         }
 
         auto container =
@@ -132,23 +148,26 @@ namespace gdom
                 style.top,
                 parentSize.height);
 
-        container->setPosition({flowOffset.x + left,
+        container->setPosition({flowOffset.x +
+                                    left,
+
                                 parentSize.height -
                                     flowOffset.y -
                                     top});
 
-        auto label =
+        m_label =
             CCLabelBMFont::create(
-                textContent.c_str(),
+                textContent.get().c_str(),
                 "bigFont.fnt");
 
-        if (!label)
+        if (!m_label)
         {
-            return container;
+            return finishRender(
+                container);
         }
 
         const auto rawSize =
-            label->getContentSize();
+            m_label->getContentSize();
 
         if (rawSize.height > 0.f)
         {
@@ -161,25 +180,41 @@ namespace gdom
                 requestedFontSize /
                 rawSize.height;
 
-            label->setScale(scale);
+            m_label->setScale(
+                scale);
         }
 
-        label->setAnchorPoint({0.f,
-                               1.f});
+        m_label->setAnchorPoint({0.f,
+                                 1.f});
 
-        label->setPosition({0.f,
-                            getContentSize().height});
+        m_label->setPosition({0.f,
+                              getContentSize().height});
 
-        label->setColor({style.color.r,
-                         style.color.g,
-                         style.color.b});
+        container->addChild(
+            m_label);
 
-        label->setOpacity(
-            style.color.a);
+        applyPaint();
 
-        container->addChild(label);
+        return finishRender(
+            container);
+    }
 
-        return container;
+    void HTMLSpanElement::applyPaint()
+    {
+        if (!m_label)
+        {
+            return;
+        }
+
+        const auto &color =
+            style.color.get();
+
+        m_label->setColor({color.r,
+                           color.g,
+                           color.b});
+
+        m_label->setOpacity(
+            color.a);
     }
 
 }

@@ -5,6 +5,8 @@
 namespace gdom
 {
 
+    class RoundedRectNode;
+
     class HTMLDivElement final : public HTMLElement
     {
     public:
@@ -13,7 +15,15 @@ namespace gdom
     protected:
         CCNode *render(
             const CCSize &parentSize,
-            const CCPoint &flowOffset = {0.f, 0.f}) override;
+            const CCPoint &flowOffset = {
+                0.f,
+                0.f}) override;
+
+        void applyPaint() override;
+
+    private:
+        RoundedRectNode *m_background =
+            nullptr;
     };
 
 }

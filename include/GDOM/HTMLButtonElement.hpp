@@ -5,6 +5,8 @@
 namespace gdom
 {
 
+  class RoundedRectNode;
+
   class HTMLButtonElement : public HTMLElement
   {
   public:
@@ -20,10 +22,20 @@ namespace gdom
   protected:
     CCNode *render(
         const CCSize &parentSize,
-        const CCPoint &flowOffset = {0.f, 0.f}) override;
+        const CCPoint &flowOffset = {
+            0.f,
+            0.f}) override;
+
+    void applyPaint() override;
 
   private:
     CCSize measureText() const;
+
+    RoundedRectNode *m_background =
+        nullptr;
+
+    CCLabelBMFont *m_label =
+        nullptr;
   };
 
 }

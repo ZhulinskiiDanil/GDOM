@@ -93,9 +93,11 @@ namespace gdom
         const CCSize &containingSize,
         const CCSize &availableSize) const
     {
-        float width = 0.f;
+        float width =
+            0.f;
 
-        if (LengthResolver::isAuto(
+        if (
+            LengthResolver::isAuto(
                 style.width))
         {
             width =
@@ -111,9 +113,11 @@ namespace gdom
                     containingSize.width);
         }
 
-        float height = 0.f;
+        float height =
+            0.f;
 
-        if (LengthResolver::isAuto(
+        if (
+            LengthResolver::isAuto(
                 style.height))
         {
             height =
@@ -180,10 +184,6 @@ namespace gdom
                                     flowOffset.y -
                                     top});
 
-        //
-        // Background + border
-        //
-
         const float borderWidth =
             std::max(
                 0.f,
@@ -202,30 +202,26 @@ namespace gdom
                         size.width,
                         size.height)));
 
-        auto background =
+        m_background =
             RoundedRectNode::create(
                 size,
-                style.backgroundColor,
+                style.backgroundColor.get(),
                 borderRadius,
                 borderWidth,
-                style.borderColor);
+                style.borderColor.get());
 
-        if (background)
+        if (m_background)
         {
-            background->setAnchorPoint({0.f,
-                                        0.f});
+            m_background->setAnchorPoint({0.f,
+                                          0.f});
 
-            background->setPosition({0.f,
-                                     0.f});
+            m_background->setPosition({0.f,
+                                       0.f});
 
             container->addChild(
-                background,
+                m_background,
                 1);
         }
-
-        //
-        // Padding
-        //
 
         const auto padding =
             BoxResolver::resolve(
@@ -237,29 +233,26 @@ namespace gdom
                 size.width,
                 size.height);
 
-        //
-        // Visible text
-        //
-
         const std::string initialText =
-            value.empty()
-                ? placeholder
-                : value;
+            value.get().empty()
+                ? placeholder.get()
+                : value.get();
 
-        auto label =
+        m_label =
             CCLabelBMFont::create(
                 initialText.empty()
                     ? " "
                     : initialText.c_str(),
                 "bigFont.fnt");
 
-        if (!label)
+        if (!m_label)
         {
-            return container;
+            return finishRender(
+                container);
         }
 
         const auto rawLabelSize =
-            label->getContentSize();
+            m_label->getContentSize();
 
         if (rawLabelSize.height > 0.f)
         {
@@ -268,43 +261,20 @@ namespace gdom
                     style.fontSize,
                     rawLabelSize.height);
 
-            label->setScale(
+            m_label->setScale(
                 requestedFontSize /
                 rawLabelSize.height);
         }
 
-        label->setAnchorPoint({0.f,
-                               0.5f});
+        m_label->setAnchorPoint({0.f,
+                                 0.5f});
 
-        label->setPosition({padding.left,
-                            size.height / 2.f});
-
-        if (value.empty())
-        {
-            label->setColor({style.placeholderColor.r,
-                             style.placeholderColor.g,
-                             style.placeholderColor.b});
-
-            label->setOpacity(
-                style.placeholderColor.a);
-        }
-        else
-        {
-            label->setColor({style.color.r,
-                             style.color.g,
-                             style.color.b});
-
-            label->setOpacity(
-                style.color.a);
-        }
+        m_label->setPosition({padding.left,
+                              size.height / 2.f});
 
         container->addChild(
-            label,
+            m_label,
             3);
-
-        //
-        // GDOM caret
-        //
 
         auto caret =
             CCLayerColor::create(
@@ -329,12 +299,6 @@ namespace gdom
                 4);
         }
 
-        //
-        // Native TextInput
-        //
-        // Only keyboard / focus / editing.
-        //
-
         auto nativeInput =
             TextInput::create(
                 size.width,
@@ -343,17 +307,18 @@ namespace gdom
 
         if (!nativeInput)
         {
-            return container;
+            applyPaint();
+
+            return finishRender(
+                container);
         }
 
         nativeInput->hideBG();
 
         nativeInput->setString(
-            value,
+            value.get(),
             false);
 
-        // Keep native rendering outside
-        // the visible GDOM element.
         nativeInput->setPosition({-10000.f,
                                   -10000.f});
 
@@ -372,60 +337,49 @@ namespace gdom
             }
         }
 
-        //
-        // Sync native input -> GDOM
-        //
-
         nativeInput->setCallback(
-            [this, label, caret, padding, size](
+            [this, caret, padding, size](
                 const std::string &newValue)
             {
                 value =
                     newValue;
 
-                const bool showPlaceholder =
-                    value.empty();
-
-                const auto &displayText =
-                    showPlaceholder
-                        ? placeholder
-                        : value;
-
-                label->setString(
-                    displayText.empty()
-                        ? " "
-                        : displayText.c_str());
-
-                const auto &displayColor =
-                    showPlaceholder
-                        ? style.placeholderColor
-                        : style.color;
-
-                label->setColor({displayColor.r,
-                                 displayColor.g,
-                                 displayColor.b});
-
-                label->setOpacity(
-                    displayColor.a);
-
-                if (caret)
+                if (m_label)
                 {
-                    const float textWidth =
+                    const bool showPlaceholder =
+                        value.get().empty();
+
+                    const std::string &displayText =
                         showPlaceholder
-                            ? 0.f
-                            : label
-                                  ->getScaledContentSize()
-                                  .width;
+                            ? placeholder.get()
+                            : value.get();
 
-                    caret->setPosition({padding.left +
-                                            textWidth +
-                                            2.f,
+                    m_label->setString(
+                        displayText.empty()
+                            ? " "
+                            : displayText.c_str());
 
-                                        size.height / 2.f -
-                                            caret
-                                                    ->getContentSize()
-                                                    .height /
-                                                2.f});
+                    applyPaint();
+
+                    if (caret)
+                    {
+                        const float textWidth =
+                            showPlaceholder
+                                ? 0.f
+                                : m_label
+                                      ->getScaledContentSize()
+                                      .width;
+
+                        caret->setPosition({padding.left +
+                                                textWidth +
+                                                2.f,
+
+                                            size.height / 2.f -
+                                                caret
+                                                        ->getContentSize()
+                                                        .height /
+                                                    2.f});
+                    }
                 }
 
                 if (onInput)
@@ -439,10 +393,6 @@ namespace gdom
             nativeInput,
             4);
 
-        //
-        // Focus target
-        //
-
         auto focusTarget =
             InputFocusTarget::create(
                 nativeInput,
@@ -450,15 +400,14 @@ namespace gdom
 
         if (!focusTarget)
         {
-            return container;
+            applyPaint();
+
+            return finishRender(
+                container);
         }
 
         container->addChild(
             focusTarget);
-
-        //
-        // Transparent clickable area
-        //
 
         auto hitbox =
             CCLayerColor::create(
@@ -471,7 +420,10 @@ namespace gdom
 
         if (!hitbox)
         {
-            return container;
+            applyPaint();
+
+            return finishRender(
+                container);
         }
 
         auto menu =
@@ -479,7 +431,10 @@ namespace gdom
 
         if (!menu)
         {
-            return container;
+            applyPaint();
+
+            return finishRender(
+                container);
         }
 
         menu->setContentSize(
@@ -500,7 +455,10 @@ namespace gdom
 
         if (!item)
         {
-            return container;
+            applyPaint();
+
+            return finishRender(
+                container);
         }
 
         item->setAnchorPoint({0.5f,
@@ -516,7 +474,67 @@ namespace gdom
             menu,
             10);
 
-        return container;
+        applyPaint();
+
+        return finishRender(
+            container);
+    }
+
+    void HTMLInputElement::applyPaint()
+    {
+        if (m_background)
+        {
+            m_background->setFillColor(
+                style.backgroundColor.get());
+
+            m_background->setBorderColor(
+                style.borderColor.get());
+
+            const auto size =
+                getContentSize();
+
+            const float borderRadius =
+                std::max(
+                    0.f,
+                    LengthResolver::resolve(
+                        style.borderRadius,
+                        std::min(
+                            size.width,
+                            size.height)));
+
+            m_background->setRadius(
+                borderRadius);
+        }
+
+        if (!m_label)
+        {
+            return;
+        }
+
+        const bool showPlaceholder =
+            value.get().empty();
+
+        const std::string &displayText =
+            showPlaceholder
+                ? placeholder.get()
+                : value.get();
+
+        m_label->setString(
+            displayText.empty()
+                ? " "
+                : displayText.c_str());
+
+        const auto &displayColor =
+            showPlaceholder
+                ? style.placeholderColor.get()
+                : style.color.get();
+
+        m_label->setColor({displayColor.r,
+                           displayColor.g,
+                           displayColor.b});
+
+        m_label->setOpacity(
+            displayColor.a);
     }
 
 }

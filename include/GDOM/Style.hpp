@@ -1,6 +1,10 @@
 #pragma once
 
 #include <Geode/Geode.hpp>
+
+#include <GDOM/ReactiveProperty.hpp>
+
+#include <functional>
 #include <string>
 
 using namespace geode::prelude;
@@ -10,65 +14,204 @@ namespace gdom
 
     struct Style
     {
-        std::string display = "block";
-        std::string flexDirection = "row";
-        std::string justifyContent = "flex-start";
-        std::string alignItems = "flex-start";
+        //
+        // Layout
+        //
 
-        std::string overflow = "visible";
+        ReactiveProperty<std::string>
+            display{
+                "block",
+                DirtyFlags::Layout};
 
-        ccColor4B backgroundColor{
-            0,
-            0,
-            0,
-            0};
+        ReactiveProperty<std::string>
+            flexDirection{
+                "row",
+                DirtyFlags::Layout};
 
-        ccColor4B borderColor{
-            255,
-            255,
-            255,
-            255};
+        ReactiveProperty<std::string>
+            justifyContent{
+                "flex-start",
+                DirtyFlags::Layout};
 
-        ccColor4B placeholderColor{
-            150,
-            150,
-            150,
-            255};
+        ReactiveProperty<std::string>
+            alignItems{
+                "flex-start",
+                DirtyFlags::Layout};
 
-        std::string borderRadius = "0px";
-        std::string borderWidth = "0px";
+        ReactiveProperty<std::string>
+            overflow{
+                "visible",
+                DirtyFlags::Layout};
 
-        std::string left = "0px";
-        std::string top = "0px";
+        //
+        // Position / size
+        //
 
-        std::string width = "0px";
-        std::string height = "0px";
+        ReactiveProperty<std::string>
+            left{
+                "0px",
+                DirtyFlags::Layout};
 
-        // Shorthand
-        std::string margin = "0px";
-        std::string padding = "0px";
+        ReactiveProperty<std::string>
+            top{
+                "0px",
+                DirtyFlags::Layout};
 
-        // Empty = use shorthand value
-        std::string marginTop = "";
-        std::string marginRight = "";
-        std::string marginBottom = "";
-        std::string marginLeft = "";
+        ReactiveProperty<std::string>
+            width{
+                "0px",
+                DirtyFlags::Layout};
 
-        std::string paddingTop = "";
-        std::string paddingRight = "";
-        std::string paddingBottom = "";
-        std::string paddingLeft = "";
+        ReactiveProperty<std::string>
+            height{
+                "0px",
+                DirtyFlags::Layout};
 
-        std::string gap = "0px";
+        //
+        // Margin
+        //
 
-        // Text
-        std::string fontSize = "16px";
+        ReactiveProperty<std::string>
+            margin{
+                "0px",
+                DirtyFlags::Layout};
 
-        ccColor4B color{
-            255,
-            255,
-            255,
-            255};
+        ReactiveProperty<std::string>
+            marginTop{
+                "",
+                DirtyFlags::Layout};
+
+        ReactiveProperty<std::string>
+            marginRight{
+                "",
+                DirtyFlags::Layout};
+
+        ReactiveProperty<std::string>
+            marginBottom{
+                "",
+                DirtyFlags::Layout};
+
+        ReactiveProperty<std::string>
+            marginLeft{
+                "",
+                DirtyFlags::Layout};
+
+        //
+        // Padding
+        //
+
+        ReactiveProperty<std::string>
+            padding{
+                "0px",
+                DirtyFlags::Layout};
+
+        ReactiveProperty<std::string>
+            paddingTop{
+                "",
+                DirtyFlags::Layout};
+
+        ReactiveProperty<std::string>
+            paddingRight{
+                "",
+                DirtyFlags::Layout};
+
+        ReactiveProperty<std::string>
+            paddingBottom{
+                "",
+                DirtyFlags::Layout};
+
+        ReactiveProperty<std::string>
+            paddingLeft{
+                "",
+                DirtyFlags::Layout};
+
+        ReactiveProperty<std::string>
+            gap{
+                "0px",
+                DirtyFlags::Layout};
+
+        //
+        // Typography
+        //
+
+        ReactiveProperty<std::string>
+            fontSize{
+                "16px",
+                DirtyFlags::Layout};
+
+        ReactiveProperty<ccColor4B>
+            color{
+                {255, 255, 255, 255},
+                DirtyFlags::Paint};
+
+        ReactiveProperty<ccColor4B>
+            placeholderColor{
+                {150, 150, 150, 255},
+                DirtyFlags::Paint};
+
+        //
+        // Box rendering
+        //
+
+        ReactiveProperty<ccColor4B>
+            backgroundColor{
+                {0, 0, 0, 0},
+                DirtyFlags::Paint};
+
+        ReactiveProperty<ccColor4B>
+            borderColor{
+                {255, 255, 255, 255},
+                DirtyFlags::Paint};
+
+        ReactiveProperty<std::string>
+            borderWidth{
+                "0px",
+                DirtyFlags::Layout};
+
+        ReactiveProperty<std::string>
+            borderRadius{
+                "0px",
+                DirtyFlags::Paint};
+
+        void bind(
+            std::function<void(DirtyFlags)>
+                callback)
+        {
+            display.bind(callback);
+            flexDirection.bind(callback);
+            justifyContent.bind(callback);
+            alignItems.bind(callback);
+            overflow.bind(callback);
+
+            left.bind(callback);
+            top.bind(callback);
+
+            width.bind(callback);
+            height.bind(callback);
+
+            margin.bind(callback);
+            marginTop.bind(callback);
+            marginRight.bind(callback);
+            marginBottom.bind(callback);
+            marginLeft.bind(callback);
+
+            padding.bind(callback);
+            paddingTop.bind(callback);
+            paddingRight.bind(callback);
+            paddingBottom.bind(callback);
+            paddingLeft.bind(callback);
+
+            gap.bind(callback);
+
+            fontSize.bind(callback);
+            color.bind(callback);
+            placeholderColor.bind(callback);
+
+            backgroundColor.bind(callback);
+            borderColor.bind(callback);
+            borderWidth.bind(callback);
+            borderRadius.bind(callback);
+        }
     };
 
 }

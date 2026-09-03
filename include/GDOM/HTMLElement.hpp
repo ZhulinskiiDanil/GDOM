@@ -1,16 +1,21 @@
 #pragma once
 
 #include <Geode/Geode.hpp>
-#include <GDOM/Style.hpp>
 
+#include <GDOM/Style.hpp>
+#include <GDOM/DirtyFlags.hpp>
+#include <GDOM/ReactiveProperty.hpp>
+
+#include <functional>
 #include <string>
 #include <vector>
-#include <functional>
 
 using namespace geode::prelude;
 
 namespace gdom
 {
+
+    class GDOMDocument;
 
     namespace layout
     {
@@ -21,27 +26,80 @@ namespace gdom
     class HTMLElement
     {
     public:
+        HTMLElement();
+
         virtual ~HTMLElement() = default;
 
         Style style;
-        std::string textContent;
-        std::string value;
-        std::string placeholder;
 
-        void appendChild(
-            HTMLElement *child);
+        ReactiveProperty<std::string>
+            textContent{
+                "",
+                DirtyFlags::Layout};
 
-        // Handlers
-        std::function<void()> onClick;
+        ReactiveProperty<std::string>
+            value{
+                "",
+                DirtyFlags::Paint};
+
+        ReactiveProperty<std::string>
+            placeholder{
+                "",
+                DirtyFlags::Paint};
+
+        std::function<void()>
+            onClick;
 
         std::function<void(
             const std::string &)>
             onInput;
 
-        HTMLElement *getParentElement() const;
+        void appendChild(
+            HTMLElement *child);
+
+        HTMLElement *
+        getParentElement() const;
 
         const std::vector<HTMLElement *> &
         getChildren() const;
+
+        void setDocument(
+            GDOMDocument *document);
+
+        GDOMDocument *
+        getDocument() const;
+
+        void invalidate(
+            DirtyFlags flags);
+
+        void invalidatePaint();
+
+        void invalidateLayout();
+
+        void invalidateTree();
+
+        DirtyFlags
+        getDirtyFlags() const;
+
+        bool isDirty() const;
+
+        bool isPaintDirty() const;
+
+        bool isLayoutDirty() const;
+
+        bool isTreeDirty() const;
+
+        void clearDirty();
+
+        void clearDirty(
+            DirtyFlags flags);
+
+        void updatePaint();
+
+        CCNode *
+        getRenderedNode() const;
+
+        bool isMounted() const;
 
         CCSize getContentSize() const;
 
@@ -49,6 +107,8 @@ namespace gdom
             const CCSize &size);
 
         bool hasResolvedSize() const;
+
+        void resetResolvedSizeRecursive();
 
         virtual CCSize resolveSize(
             const CCSize &containingSize,
@@ -68,11 +128,20 @@ namespace gdom
                 0.f,
                 0.f}) = 0;
 
+        virtual void applyPaint();
+
         void renderChildren(
             CCNode *node);
 
-        HTMLElement *m_parentElement =
-            nullptr;
+        void setRenderedNode(
+            CCNode *node);
+
+        CCNode *finishRender(
+            CCNode *node);
+
+        HTMLElement *
+            m_parentElement =
+                nullptr;
 
         std::vector<HTMLElement *>
             m_children;
@@ -81,7 +150,22 @@ namespace gdom
             0.f,
             0.f};
 
-        bool m_hasResolvedSize = false;
+        bool m_hasResolvedSize =
+            false;
+
+        GDOMDocument *
+            m_document =
+                nullptr;
+
+        CCNode *
+            m_renderedNode =
+                nullptr;
+
+        DirtyFlags m_dirtyFlags =
+            DirtyFlags::Layout;
+
+        bool m_mounted =
+            false;
 
         friend class GDOMDocument;
         friend class layout::BlockLayout;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Geode/Geode.hpp>
+
 #include <GDOM/HTMLElement.hpp>
 
 #include <string>
@@ -25,14 +26,52 @@ namespace gdom
 
         void render();
 
+        void update();
+
+        void requestUpdate();
+
+        bool needsUpdate() const;
+
     private:
         explicit GDOMDocument(
             CCNode *host);
 
-        CCNode *m_host = nullptr;
+        void renderRoots();
+
+        void removeRenderedRoots();
+
+        void applyPaintRecursive(
+            HTMLElement *element);
+
+        void collectLayoutDirty(
+            HTMLElement *element,
+            std::vector<HTMLElement *> &elements);
+
+        HTMLElement *findLayoutBoundary(
+            HTMLElement *element) const;
+
+        bool rerenderBoundary(
+            HTMLElement *element);
+
+        bool isAncestorOf(
+            HTMLElement *ancestor,
+            HTMLElement *element) const;
+
+        void addBoundary(
+            std::vector<HTMLElement *> &boundaries,
+            HTMLElement *boundary) const;
+
+        void clearDescendantLayoutRecursive(
+            HTMLElement *element);
+
+        CCNode *m_host =
+            nullptr;
 
         std::vector<HTMLElement *>
             m_children;
+
+        bool m_updateRequested =
+            false;
     };
 
 }

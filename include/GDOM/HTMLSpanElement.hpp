@@ -22,10 +22,17 @@ namespace gdom
   protected:
     CCNode *render(
         const CCSize &parentSize,
-        const CCPoint &flowOffset = {0.f, 0.f}) override;
+        const CCPoint &flowOffset = {
+            0.f,
+            0.f}) override;
+
+    void applyPaint() override;
 
   private:
     CCSize measureText() const;
+
+    CCLabelBMFont *m_label =
+        nullptr;
   };
 
 }

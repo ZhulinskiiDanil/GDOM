@@ -1,8 +1,11 @@
 #include <algorithm>
 
 #include <GDOM/HTMLElement.hpp>
+#include <GDOM/GDOMDocument.hpp>
+
 #include <GDOM/LengthResolver.hpp>
 #include <GDOM/BoxResolver.hpp>
+
 #include <GDOM/layout/BlockLayout.hpp>
 #include <GDOM/layout/FlexLayout.hpp>
 
@@ -10,6 +13,28 @@ using namespace geode::prelude;
 
 namespace gdom
 {
+
+    HTMLElement::HTMLElement()
+    {
+        auto invalidateCallback =
+            [this](DirtyFlags flags)
+        {
+            invalidate(
+                flags);
+        };
+
+        style.bind(
+            invalidateCallback);
+
+        textContent.bind(
+            invalidateCallback);
+
+        value.bind(
+            invalidateCallback);
+
+        placeholder.bind(
+            invalidateCallback);
+    }
 
     void HTMLElement::appendChild(
         HTMLElement *child)
@@ -19,9 +44,37 @@ namespace gdom
             return;
         }
 
-        child->m_parentElement = this;
+        if (
+            std::find(
+                m_children.begin(),
+                m_children.end(),
+                child) !=
+            m_children.end())
+        {
+            return;
+        }
 
-        m_children.push_back(child);
+        if (
+            child->m_parentElement &&
+            child->m_parentElement != this)
+        {
+            log::warn(
+                "GDOM: attempted to append an element "
+                "that already has a parent");
+
+            return;
+        }
+
+        child->m_parentElement =
+            this;
+
+        child->setDocument(
+            m_document);
+
+        m_children.push_back(
+            child);
+
+        invalidateTree();
     }
 
     HTMLElement *
@@ -36,7 +89,199 @@ namespace gdom
         return m_children;
     }
 
-    CCSize HTMLElement::getContentSize() const
+    void HTMLElement::setDocument(
+        GDOMDocument *document)
+    {
+        m_document =
+            document;
+
+        for (auto *child :
+             m_children)
+        {
+            if (child)
+            {
+                child->setDocument(
+                    document);
+            }
+        }
+    }
+
+    GDOMDocument *
+    HTMLElement::getDocument() const
+    {
+        return m_document;
+    }
+
+    void HTMLElement::invalidate(
+        DirtyFlags flags)
+    {
+        if (
+            flags ==
+            DirtyFlags::None)
+        {
+            return;
+        }
+
+        m_dirtyFlags |=
+            flags;
+
+        const bool affectsLayout =
+            hasFlag(
+                flags,
+                DirtyFlags::Layout) ||
+            hasFlag(
+                flags,
+                DirtyFlags::Tree) ||
+            hasFlag(
+                flags,
+                DirtyFlags::DescendantLayout);
+
+        if (affectsLayout)
+        {
+            m_hasResolvedSize =
+                false;
+
+            if (m_parentElement)
+            {
+                m_parentElement
+                    ->invalidate(
+                        DirtyFlags::DescendantLayout);
+            }
+        }
+
+        if (m_document)
+        {
+            m_document
+                ->requestUpdate();
+        }
+    }
+
+    void HTMLElement::invalidatePaint()
+    {
+        invalidate(
+            DirtyFlags::Paint);
+    }
+
+    void HTMLElement::invalidateLayout()
+    {
+        invalidate(
+            DirtyFlags::Layout);
+    }
+
+    void HTMLElement::invalidateTree()
+    {
+        invalidate(
+            DirtyFlags::Tree |
+            DirtyFlags::Layout);
+    }
+
+    DirtyFlags
+    HTMLElement::getDirtyFlags() const
+    {
+        return m_dirtyFlags;
+    }
+
+    bool HTMLElement::isDirty() const
+    {
+        return m_dirtyFlags !=
+               DirtyFlags::None;
+    }
+
+    bool HTMLElement::isPaintDirty() const
+    {
+        return hasFlag(
+            m_dirtyFlags,
+            DirtyFlags::Paint);
+    }
+
+    bool HTMLElement::isLayoutDirty() const
+    {
+        return hasFlag(
+            m_dirtyFlags,
+            DirtyFlags::Layout);
+    }
+
+    bool HTMLElement::isTreeDirty() const
+    {
+        return hasFlag(
+            m_dirtyFlags,
+            DirtyFlags::Tree);
+    }
+
+    void HTMLElement::clearDirty()
+    {
+        m_dirtyFlags =
+            DirtyFlags::None;
+    }
+
+    void HTMLElement::clearDirty(
+        DirtyFlags flags)
+    {
+        const auto current =
+            static_cast<uint8_t>(
+                m_dirtyFlags);
+
+        const auto remove =
+            static_cast<uint8_t>(
+                flags);
+
+        m_dirtyFlags =
+            static_cast<DirtyFlags>(
+                current & ~remove);
+    }
+
+    void HTMLElement::updatePaint()
+    {
+        if (!isPaintDirty())
+        {
+            return;
+        }
+
+        applyPaint();
+
+        clearDirty(
+            DirtyFlags::Paint);
+    }
+
+    void HTMLElement::applyPaint()
+    {
+    }
+
+    void HTMLElement::setRenderedNode(
+        CCNode *node)
+    {
+        m_renderedNode =
+            node;
+
+        m_mounted =
+            node != nullptr;
+    }
+
+    CCNode *
+    HTMLElement::getRenderedNode() const
+    {
+        return m_renderedNode;
+    }
+
+    bool HTMLElement::isMounted() const
+    {
+        return m_mounted;
+    }
+
+    CCNode *
+    HTMLElement::finishRender(
+        CCNode *node)
+    {
+        setRenderedNode(
+            node);
+
+        clearDirty();
+
+        return node;
+    }
+
+    CCSize
+    HTMLElement::getContentSize() const
     {
         return m_resolvedSize;
     }
@@ -44,13 +289,37 @@ namespace gdom
     void HTMLElement::setResolvedSize(
         const CCSize &size)
     {
-        m_resolvedSize = size;
-        m_hasResolvedSize = true;
+        m_resolvedSize =
+            size;
+
+        m_hasResolvedSize =
+            true;
     }
 
     bool HTMLElement::hasResolvedSize() const
     {
         return m_hasResolvedSize;
+    }
+
+    void HTMLElement::resetResolvedSizeRecursive()
+    {
+        m_resolvedSize =
+            CCSize(
+                0.f,
+                0.f);
+
+        m_hasResolvedSize =
+            false;
+
+        for (auto *child :
+             m_children)
+        {
+            if (child)
+            {
+                child
+                    ->resetResolvedSizeRecursive();
+            }
+        }
     }
 
     CCSize HTMLElement::resolveSize(
@@ -65,38 +334,53 @@ namespace gdom
         const CCSize &containingSize,
         const CCSize &availableSize) const
     {
-        float width = 0.f;
+        float width =
+            0.f;
 
-        if (LengthResolver::isAuto(style.width))
+        if (
+            LengthResolver::isAuto(
+                style.width))
         {
-            width = availableSize.width;
+            width =
+                availableSize.width;
         }
         else
         {
-            width = LengthResolver::resolve(
-                style.width,
-                containingSize.width);
+            width =
+                LengthResolver::resolve(
+                    style.width,
+                    containingSize.width);
         }
 
-        float height = 0.f;
+        float height =
+            0.f;
 
-        if (LengthResolver::isAuto(style.height))
+        if (
+            LengthResolver::isAuto(
+                style.height))
         {
-            height = measureAutoHeight(
-                {width,
-                 availableSize.height},
-                width);
+            height =
+                measureAutoHeight(
+                    {width,
+                     availableSize.height},
+                    width);
         }
         else
         {
-            height = LengthResolver::resolve(
-                style.height,
-                containingSize.height);
+            height =
+                LengthResolver::resolve(
+                    style.height,
+                    containingSize.height);
         }
 
         return {
-            std::max(0.f, width),
-            std::max(0.f, height)};
+            std::max(
+                0.f,
+                width),
+
+            std::max(
+                0.f,
+                height)};
     }
 
     float HTMLElement::measureAutoHeight(
@@ -142,7 +426,8 @@ namespace gdom
             float largestChildHeight =
                 0.f;
 
-            for (auto *child : m_children)
+            for (auto *child :
+                 m_children)
             {
                 if (!child)
                 {
@@ -195,7 +480,8 @@ namespace gdom
         int childCount =
             0;
 
-        for (auto *child : m_children)
+        for (auto *child :
+             m_children)
         {
             if (!child)
             {
@@ -231,7 +517,7 @@ namespace gdom
                 childSize.height +
                 margin.bottom;
 
-            childCount++;
+            ++childCount;
         }
 
         if (childCount > 1)
@@ -255,7 +541,9 @@ namespace gdom
             return;
         }
 
-        if (style.display == "flex")
+        if (
+            style.display ==
+            "flex")
         {
             layout::FlexLayout::render(
                 this,

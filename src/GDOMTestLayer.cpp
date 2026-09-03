@@ -140,61 +140,192 @@ void GDOMTestLayer::onClose(
 
 void GDOMTestLayer::buildTestUI()
 {
-    const auto document =
+    auto document =
         gdom::GDOMDocument::create(this);
 
-    auto list =
+    if (!document)
+    {
+        return;
+    }
+
+    auto wrapper =
         document->createElement("div");
 
-    list->style.left = "100px";
-    list->style.top = "50px";
+    wrapper->style.left = "40px";
+    wrapper->style.top = "30px";
+    wrapper->style.width = "420px";
+    wrapper->style.height = "280px";
+    wrapper->style.overflow = "auto";
 
-    list->style.width = "300px";
-    list->style.height = "140px";
+    wrapper->style.display = "flex";
+    wrapper->style.flexDirection = "column";
+    wrapper->style.padding = "16px";
+    wrapper->style.gap = "12px";
 
-    list->style.display = "flex";
-    list->style.flexDirection = "column";
-
-    list->style.padding = "8px";
-    list->style.gap = "6px";
-
-    list->style.overflow = "auto";
-
-    list->style.backgroundColor = {
+    wrapper->style.backgroundColor = {
         25,
         25,
         30,
         255};
 
-    list->style.borderColor = {
-        100,
-        100,
-        120,
+    wrapper->style.borderRadius =
+        "12px";
+
+    auto title =
+        document->createElement("span");
+
+    title->textContent =
+        "AUTO HEIGHT TEST";
+
+    title->style.width = "auto";
+    title->style.height = "auto";
+    title->style.fontSize = "16px";
+
+    auto section =
+        document->createElement("div");
+
+    section->style.width = "360px";
+    section->style.height = "auto";
+
+    section->style.display = "flex";
+    section->style.flexDirection = "column";
+    section->style.padding = "10px";
+    section->style.gap = "8px";
+
+    section->style.backgroundColor = {
+        40,
+        40,
+        48,
         255};
 
-    list->style.borderWidth = "1px";
-    list->style.borderRadius = "8px";
+    section->style.borderRadius =
+        "8px";
 
-    for (int i = 0; i < 12; ++i)
+    auto boxA =
+        document->createElement("div");
+
+    boxA->style.width = "100%";
+    boxA->style.height = "40px";
+
+    boxA->style.backgroundColor = {
+        80,
+        140,
+        255,
+        255};
+
+    boxA->style.borderRadius =
+        "6px";
+
+    auto boxB =
+        document->createElement("div");
+
+    boxB->style.width = "100%";
+    boxB->style.height = "40px";
+
+    boxB->style.backgroundColor = {
+        100,
+        220,
+        140,
+        255};
+
+    boxB->style.borderRadius =
+        "6px";
+
+    auto footer =
+        document->createElement("div");
+
+    footer->style.width = "360px";
+    footer->style.height = "30px";
+
+    footer->style.backgroundColor = {
+        70,
+        70,
+        80,
+        255};
+
+    footer->style.borderRadius =
+        "6px";
+
+    auto button =
+        document->createElement("button");
+
+    button->textContent =
+        "CHANGE HEIGHT";
+
+    button->style.width =
+        "170px";
+
+    button->style.height =
+        "40px";
+
+    button->style.backgroundColor = {
+        80,
+        100,
+        220,
+        255};
+
+    button->style.borderRadius =
+        "8px";
+
+    bool *changed =
+        new bool(false);
+
+    button->onClick =
+        [document,
+         title,
+         boxA,
+         boxB,
+         changed]()
     {
-        auto item =
-            document->createElement("div");
+        *changed =
+            !*changed;
 
-        item->style.width = "100%";
-        item->style.height = "32px";
+        if (*changed)
+        {
+            title->style.fontSize =
+                "24px";
 
-        item->style.backgroundColor = {
-            static_cast<GLubyte>(
-                40 + i * 4),
-            60,
-            90,
-            255};
+            boxA->style.height =
+                "90px";
 
-        item->style.borderRadius = "5px";
+            boxB->style.height =
+                "70px";
+        }
+        else
+        {
+            title->style.fontSize =
+                "16px";
 
-        list->appendChild(item);
-    }
+            boxA->style.height =
+                "40px";
 
-    document->appendChild(list);
+            boxB->style.height =
+                "40px";
+        }
+
+        document->update();
+    };
+
+    section->appendChild(
+        boxA);
+
+    section->appendChild(
+        boxB);
+
+    wrapper->appendChild(
+        title);
+
+    wrapper->appendChild(
+        section);
+
+    wrapper->appendChild(
+        footer);
+
+    wrapper->appendChild(
+        button);
+
+    document->appendChild(
+        wrapper);
+
     document->render();
 }
