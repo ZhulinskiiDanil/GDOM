@@ -14,68 +14,6 @@ using namespace geode::prelude;
 namespace gdom
 {
 
-    namespace
-    {
-
-        class InputFocusTarget : public CCNode
-        {
-        public:
-            static InputFocusTarget *create(
-                TextInput *input,
-                CCLayerColor *caret)
-            {
-                auto target =
-                    new InputFocusTarget();
-
-                if (!target)
-                {
-                    return nullptr;
-                }
-
-                if (!target->init())
-                {
-                    delete target;
-                    return nullptr;
-                }
-
-                target->m_input =
-                    input;
-
-                target->m_caret =
-                    caret;
-
-                target->autorelease();
-
-                return target;
-            }
-
-            void focus(
-                CCObject *)
-            {
-                if (!m_input)
-                {
-                    return;
-                }
-
-                m_input->focus();
-
-                if (m_caret)
-                {
-                    m_caret->setVisible(
-                        true);
-                }
-            }
-
-        private:
-            TextInput *m_input =
-                nullptr;
-
-            CCLayerColor *m_caret =
-                nullptr;
-        };
-
-    }
-
     HTMLInputElement *HTMLInputElement::create()
     {
         return new HTMLInputElement();
@@ -113,6 +51,31 @@ namespace gdom
                     containingSize.width);
         }
 
+        if (!style.minWidth.get().empty())
+        {
+            width =
+                std::max(
+                    width,
+                    LengthResolver::resolve(
+                        style.minWidth,
+                        containingSize.width));
+        }
+
+        if (!style.maxWidth.get().empty())
+        {
+            width =
+                std::min(
+                    width,
+                    LengthResolver::resolve(
+                        style.maxWidth,
+                        containingSize.width));
+        }
+
+        width =
+            std::max(
+                0.f,
+                width);
+
         float height =
             0.f;
 
@@ -131,14 +94,34 @@ namespace gdom
                     containingSize.height);
         }
 
-        return {
-            std::max(
-                0.f,
-                width),
+        if (!style.minHeight.get().empty())
+        {
+            height =
+                std::max(
+                    height,
+                    LengthResolver::resolve(
+                        style.minHeight,
+                        containingSize.height));
+        }
 
+        if (!style.maxHeight.get().empty())
+        {
+            height =
+                std::min(
+                    height,
+                    LengthResolver::resolve(
+                        style.maxHeight,
+                        containingSize.height));
+        }
+
+        height =
             std::max(
                 0.f,
-                height)};
+                height);
+
+        return {
+            width,
+            height};
     }
 
     CCNode *HTMLInputElement::render(
@@ -155,6 +138,12 @@ namespace gdom
         const auto size =
             getContentSize();
 
+        m_background =
+            nullptr;
+
+        m_input =
+            nullptr;
+
         auto container =
             CCNode::create();
 
@@ -166,8 +155,9 @@ namespace gdom
         container->setContentSize(
             size);
 
-        container->setAnchorPoint({0.f,
-                                   1.f});
+        container->setAnchorPoint({
+            0.f,
+            1.f});
 
         const float left =
             LengthResolver::resolve(
@@ -179,10 +169,13 @@ namespace gdom
                 style.top,
                 parentSize.height);
 
-        container->setPosition({flowOffset.x + left,
-                                parentSize.height -
-                                    flowOffset.y -
-                                    top});
+        container->setPosition({
+            flowOffset.x +
+                left,
+
+            parentSize.height -
+                flowOffset.y -
+                top});
 
         const float borderWidth =
             std::max(
@@ -212,11 +205,13 @@ namespace gdom
 
         if (m_background)
         {
-            m_background->setAnchorPoint({0.f,
-                                          0.f});
+            m_background->setAnchorPoint({
+                0.f,
+                0.f});
 
-            m_background->setPosition({0.f,
-                                       0.f});
+            m_background->setPosition({
+                0.f,
+                0.f});
 
             container->addChild(
                 m_background,
@@ -233,79 +228,20 @@ namespace gdom
                 size.width,
                 size.height);
 
-        const std::string initialText =
-            value.get().empty()
-                ? placeholder.get()
-                : value.get();
+        const float inputWidth =
+            std::max(
+                1.f,
+                size.width -
+                    padding.left -
+                    padding.right);
 
-        m_label =
-            CCLabelBMFont::create(
-                initialText.empty()
-                    ? " "
-                    : initialText.c_str(),
-                "bigFont.fnt");
-
-        if (!m_label)
-        {
-            return finishRender(
-                container);
-        }
-
-        const auto rawLabelSize =
-            m_label->getContentSize();
-
-        if (rawLabelSize.height > 0.f)
-        {
-            const float requestedFontSize =
-                LengthResolver::resolve(
-                    style.fontSize,
-                    rawLabelSize.height);
-
-            m_label->setScale(
-                requestedFontSize /
-                rawLabelSize.height);
-        }
-
-        m_label->setAnchorPoint({0.f,
-                                 0.5f});
-
-        m_label->setPosition({padding.left,
-                              size.height / 2.f});
-
-        container->addChild(
-            m_label,
-            3);
-
-        auto caret =
-            CCLayerColor::create(
-                {255,
-                 255,
-                 255,
-                 255},
-                1.5f,
-                18.f);
-
-        if (caret)
-        {
-            caret->setVisible(
-                false);
-
-            caret->setPosition({padding.left,
-                                size.height / 2.f -
-                                    9.f});
-
-            container->addChild(
-                caret,
-                4);
-        }
-
-        auto nativeInput =
+        m_input =
             TextInput::create(
-                size.width,
-                "",
+                inputWidth,
+                placeholder.get(),
                 "bigFont.fnt");
 
-        if (!nativeInput)
+        if (!m_input)
         {
             applyPaint();
 
@@ -313,74 +249,27 @@ namespace gdom
                 container);
         }
 
-        nativeInput->hideBG();
+        m_input->hideBG();
 
-        nativeInput->setString(
+        m_input->setTextAlign(
+            TextInputAlign::Left);
+
+        m_input->setString(
             value.get(),
             false);
 
-        nativeInput->setPosition({-10000.f,
-                                  -10000.f});
+        m_input->setPosition({
+            padding.left +
+                inputWidth / 2.f,
 
-        auto inputNode =
-            nativeInput->getInputNode();
+            size.height / 2.f});
 
-        if (inputNode)
-        {
-            auto nativeLabel =
-                inputNode->getTextLabel();
-
-            if (nativeLabel)
-            {
-                nativeLabel->setVisible(
-                    false);
-            }
-        }
-
-        nativeInput->setCallback(
-            [this, caret, padding, size](
+        m_input->setCallback(
+            [this](
                 const std::string &newValue)
             {
                 value =
                     newValue;
-
-                if (m_label)
-                {
-                    const bool showPlaceholder =
-                        value.get().empty();
-
-                    const std::string &displayText =
-                        showPlaceholder
-                            ? placeholder.get()
-                            : value.get();
-
-                    m_label->setString(
-                        displayText.empty()
-                            ? " "
-                            : displayText.c_str());
-
-                    applyPaint();
-
-                    if (caret)
-                    {
-                        const float textWidth =
-                            showPlaceholder
-                                ? 0.f
-                                : m_label
-                                      ->getScaledContentSize()
-                                      .width;
-
-                        caret->setPosition({padding.left +
-                                                textWidth +
-                                                2.f,
-
-                                            size.height / 2.f -
-                                                caret
-                                                        ->getContentSize()
-                                                        .height /
-                                                    2.f});
-                    }
-                }
 
                 if (onInput)
                 {
@@ -390,94 +279,85 @@ namespace gdom
             });
 
         container->addChild(
-            nativeInput,
-            4);
+            m_input,
+            5);
 
-        auto focusTarget =
-            InputFocusTarget::create(
-                nativeInput,
-                caret);
-
-        if (!focusTarget)
-        {
-            applyPaint();
-
-            return finishRender(
-                container);
-        }
-
-        container->addChild(
-            focusTarget);
-
-        auto hitbox =
-            CCLayerColor::create(
-                {0,
-                 0,
-                 0,
-                 0},
-                size.width,
-                size.height);
-
-        if (!hitbox)
-        {
-            applyPaint();
-
-            return finishRender(
-                container);
-        }
-
-        auto menu =
-            CCMenu::create();
-
-        if (!menu)
-        {
-            applyPaint();
-
-            return finishRender(
-                container);
-        }
-
-        menu->setContentSize(
-            size);
-
-        menu->setAnchorPoint({0.f,
-                              0.f});
-
-        menu->setPosition({0.f,
-                           0.f});
-
-        auto item =
-            CCMenuItemSpriteExtra::create(
-                hitbox,
-                focusTarget,
-                menu_selector(
-                    InputFocusTarget::focus));
-
-        if (!item)
-        {
-            applyPaint();
-
-            return finishRender(
-                container);
-        }
-
-        item->setAnchorPoint({0.5f,
-                              0.5f});
-
-        item->setPosition({size.width / 2.f,
-                           size.height / 2.f});
-
-        menu->addChild(
-            item);
-
-        container->addChild(
-            menu,
-            10);
-
+        applyNativeStyle();
         applyPaint();
 
         return finishRender(
             container);
+    }
+
+    void HTMLInputElement::applyNativeStyle()
+    {
+        if (!m_input)
+        {
+            return;
+        }
+
+        auto inputNode =
+            m_input->getInputNode();
+
+        if (!inputNode)
+        {
+            return;
+        }
+
+        const auto &textColor =
+            style.color.get();
+
+        const auto &placeholderColor =
+            style.placeholderColor.get();
+
+        inputNode->setLabelNormalColor({
+            textColor.r,
+            textColor.g,
+            textColor.b});
+
+        inputNode->setLabelPlaceholderColor({
+            placeholderColor.r,
+            placeholderColor.g,
+            placeholderColor.b});
+
+        auto label =
+            inputNode->getTextLabel();
+
+        if (!label)
+        {
+            return;
+        }
+
+        const auto rawSize =
+            label->getContentSize();
+
+        if (rawSize.height <= 0.f)
+        {
+            return;
+        }
+
+        const float fontSize =
+            std::max(
+                0.f,
+                LengthResolver::resolve(
+                    style.fontSize,
+                    rawSize.height));
+
+        const float scale =
+            fontSize /
+            rawSize.height;
+
+        inputNode->setMaxLabelScale(
+            scale);
+
+        inputNode->setLabelPlaceholderScale(
+            scale);
+
+        label->setScale(
+            scale);
+
+        label->setOpacity(
+            textColor.a);
     }
 
     void HTMLInputElement::applyPaint()
@@ -506,35 +386,7 @@ namespace gdom
                 borderRadius);
         }
 
-        if (!m_label)
-        {
-            return;
-        }
-
-        const bool showPlaceholder =
-            value.get().empty();
-
-        const std::string &displayText =
-            showPlaceholder
-                ? placeholder.get()
-                : value.get();
-
-        m_label->setString(
-            displayText.empty()
-                ? " "
-                : displayText.c_str());
-
-        const auto &displayColor =
-            showPlaceholder
-                ? style.placeholderColor.get()
-                : style.color.get();
-
-        m_label->setColor({displayColor.r,
-                           displayColor.g,
-                           displayColor.b});
-
-        m_label->setOpacity(
-            displayColor.a);
+        applyNativeStyle();
     }
 
 }

@@ -19,8 +19,7 @@ namespace gdom
         auto invalidateCallback =
             [this](DirtyFlags flags)
         {
-            invalidate(
-                flags);
+            invalidate(flags);
         };
 
         style.bind(
@@ -352,6 +351,31 @@ namespace gdom
                     containingSize.width);
         }
 
+        if (!style.minWidth.get().empty())
+        {
+            width =
+                std::max(
+                    width,
+                    LengthResolver::resolve(
+                        style.minWidth,
+                        containingSize.width));
+        }
+
+        if (!style.maxWidth.get().empty())
+        {
+            width =
+                std::min(
+                    width,
+                    LengthResolver::resolve(
+                        style.maxWidth,
+                        containingSize.width));
+        }
+
+        width =
+            std::max(
+                0.f,
+                width);
+
         float height =
             0.f;
 
@@ -373,14 +397,34 @@ namespace gdom
                     containingSize.height);
         }
 
-        return {
-            std::max(
-                0.f,
-                width),
+        if (!style.minHeight.get().empty())
+        {
+            height =
+                std::max(
+                    height,
+                    LengthResolver::resolve(
+                        style.minHeight,
+                        containingSize.height));
+        }
 
+        if (!style.maxHeight.get().empty())
+        {
+            height =
+                std::min(
+                    height,
+                    LengthResolver::resolve(
+                        style.maxHeight,
+                        containingSize.height));
+        }
+
+        height =
             std::max(
                 0.f,
-                height)};
+                height);
+
+        return {
+            width,
+            height};
     }
 
     float HTMLElement::measureAutoHeight(

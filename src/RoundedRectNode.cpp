@@ -22,6 +22,27 @@ namespace gdom
                 color.a / 255.f};
         }
 
+        float clampRadius(
+            float radius,
+            float width,
+            float height)
+        {
+            if (
+                width <= 0.f ||
+                height <= 0.f)
+            {
+                return 0.f;
+            }
+
+            return std::clamp(
+                radius,
+                0.f,
+                std::min(
+                    width,
+                    height) /
+                    2.f);
+        }
+
     }
 
     RoundedRectNode *RoundedRectNode::create(
@@ -77,7 +98,9 @@ namespace gdom
             radius;
 
         m_borderWidth =
-            borderWidth;
+            std::max(
+                0.f,
+                borderWidth);
 
         m_borderColor =
             borderColor;
@@ -155,7 +178,9 @@ namespace gdom
         float radius)
     {
         m_radius =
-            radius;
+            std::max(
+                0.f,
+                radius);
 
         redraw();
     }
@@ -170,10 +195,14 @@ namespace gdom
         m_draw->clear();
 
         const float width =
-            m_size.width;
+            std::max(
+                0.f,
+                m_size.width);
 
         const float height =
-            m_size.height;
+            std::max(
+                0.f,
+                m_size.height);
 
         if (
             width <= 0.f ||
@@ -182,14 +211,24 @@ namespace gdom
             return;
         }
 
+        //
+        // CSS-like radius limitation.
+        //
+        // 10px high element:
+        // max radius = 5px
+        //
+        // 20px high element:
+        // max radius = 10px
+        //
+        // This prevents opposite corners
+        // from overlapping.
+        //
+
         const float radius =
-            std::clamp(
+            clampRadius(
                 m_radius,
-                0.f,
-                std::min(
-                    width,
-                    height) /
-                    2.f);
+                width,
+                height);
 
         const float borderWidth =
             std::clamp(
@@ -209,26 +248,47 @@ namespace gdom
                 m_borderColor);
 
         //
-        // Number of segments per corner.
+        // Enough points for smooth corners,
+        // but not excessive for small elements.
         //
 
         const int segments =
             std::clamp(
                 static_cast<int>(
                     std::ceil(
-                        std::max(
-                            radius,
-                            1.f) *
-                        2.f)),
+                        radius *
+                        1.5f)),
                 3,
                 16);
 
         //
-        // Build rounded rectangle loop.
+        // Build convex rounded rectangle.
         //
         // Important:
-        // outer and inner loops always contain
-        // exactly the same number of vertices.
+        //
+        // We DO NOT include the final point
+        // of each quarter-circle.
+        //
+        // Previously every corner used:
+        //
+        //     i <= segments
+        //
+        // This can create duplicate vertices
+        // when radius == height / 2 or
+        // radius == width / 2.
+        //
+        // Example:
+        //
+        // height = 8
+        // radius = 4
+        //
+        // Bottom-right and top-right arcs
+        // share the same center.
+        //
+        // Their connecting point was inserted
+        // twice, which can confuse CCDrawNode's
+        // polygon triangulation and produce
+        // spikes / arrows.
         //
 
         auto buildLoop =
@@ -237,32 +297,60 @@ namespace gdom
                 float y,
                 float w,
                 float h,
-                float r)
+                float requestedRadius)
         {
             std::vector<CCPoint>
                 vertices;
 
+            if (
+                w <= 0.f ||
+                h <= 0.f)
+            {
+                return vertices;
+            }
+
+            const float r =
+                clampRadius(
+                    requestedRadius,
+                    w,
+                    h);
+
+            //
+            // Radius zero does not need arcs.
+            //
+
+            if (r <= 0.001f)
+            {
+                vertices.reserve(4);
+
+                vertices.push_back({x + w,
+                                    y});
+
+                vertices.push_back({x + w,
+                                    y + h});
+
+                vertices.push_back({x,
+                                    y + h});
+
+                vertices.push_back({x,
+                                    y});
+
+                return vertices;
+            }
+
             vertices.reserve(
                 static_cast<size_t>(
-                    (segments + 1) * 4));
-
-            const float safeRadius =
-                std::clamp(
-                    r,
-                    0.f,
-                    std::min(
-                        w,
-                        h) /
-                        2.f);
+                    segments * 4));
 
             auto addCorner =
                 [&](
-                    const CCPoint &center,
+                    float centerX,
+                    float centerY,
                     float startAngle)
             {
                 for (
                     int i = 0;
-                    i <= segments;
+                    i < segments;
                     ++i)
                 {
                     const float progress =
@@ -276,36 +364,45 @@ namespace gdom
                             M_PI_2) *
                             progress;
 
-                    vertices.push_back({center.x +
+                    vertices.push_back({centerX +
                                             std::cos(angle) *
-                                                safeRadius,
+                                                r,
 
-                                        center.y +
+                                        centerY +
                                             std::sin(angle) *
-                                                safeRadius});
+                                                r});
                 }
             };
 
+            //
+            // Counter-clockwise:
+            //
+            // bottom-right
+            // top-right
+            // top-left
+            // bottom-left
+            //
+
             addCorner(
-                {x + w - safeRadius,
-                 y + safeRadius},
+                x + w - r,
+                y + r,
                 -static_cast<float>(
                     M_PI_2));
 
             addCorner(
-                {x + w - safeRadius,
-                 y + h - safeRadius},
+                x + w - r,
+                y + h - r,
                 0.f);
 
             addCorner(
-                {x + safeRadius,
-                 y + h - safeRadius},
+                x + r,
+                y + h - r,
                 static_cast<float>(
                     M_PI_2));
 
             addCorner(
-                {x + safeRadius,
-                 y + safeRadius},
+                x + r,
+                y + r,
                 static_cast<float>(
                     M_PI));
 
@@ -313,8 +410,7 @@ namespace gdom
         };
 
         //
-        // No border:
-        // just draw the normal background.
+        // No border.
         //
 
         if (borderWidth <= 0.01f)
@@ -344,7 +440,7 @@ namespace gdom
         }
 
         //
-        // Outer border geometry.
+        // Outer geometry.
         //
 
         auto outer =
@@ -355,27 +451,22 @@ namespace gdom
                 height,
                 radius);
 
-        //
-        // Inner background geometry.
-        //
+        if (outer.size() < 3)
+        {
+            return;
+        }
 
         const float innerWidth =
-            std::max(
-                0.f,
-                width -
-                    borderWidth * 2.f);
+            width -
+            borderWidth * 2.f;
 
         const float innerHeight =
-            std::max(
-                0.f,
-                height -
-                    borderWidth * 2.f);
+            height -
+            borderWidth * 2.f;
 
-        const float innerRadius =
-            std::max(
-                0.f,
-                radius -
-                    borderWidth);
+        //
+        // Border completely fills the element.
+        //
 
         if (
             innerWidth <= 0.f ||
@@ -392,6 +483,22 @@ namespace gdom
             return;
         }
 
+        //
+        // Inner radius follows the outer curve.
+        //
+        // It is additionally clamped against
+        // the inner box, so it can never overlap.
+        //
+
+        const float innerRadius =
+            clampRadius(
+                std::max(
+                    0.f,
+                    radius -
+                        borderWidth),
+                innerWidth,
+                innerHeight);
+
         auto inner =
             buildLoop(
                 borderWidth,
@@ -400,11 +507,22 @@ namespace gdom
                 innerHeight,
                 innerRadius);
 
+        if (inner.size() < 3)
+        {
+            m_draw->drawPolygon(
+                outer.data(),
+                static_cast<unsigned int>(
+                    outer.size()),
+                borderColor,
+                0.f,
+                {0.f, 0.f, 0.f, 0.f});
+
+            return;
+        }
+
         //
-        // Draw actual border ring.
-        //
-        // Each segment is a quad between
-        // outer and inner polygons.
+        // Both loops are generated with the
+        // exact same number of vertices.
         //
 
         const size_t count =
@@ -436,11 +554,7 @@ namespace gdom
         }
 
         //
-        // Draw fill ONLY inside the border.
-        //
-        // It never lies on top of the border,
-        // so translucent backgrounds do not
-        // mix with borderColor.
+        // Fill.
         //
 
         m_draw->drawPolygon(

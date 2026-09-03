@@ -14,10 +14,6 @@ namespace gdom
 
     struct Style
     {
-        //
-        // Layout
-        //
-
         ReactiveProperty<std::string>
             display{
                 "block",
@@ -43,10 +39,6 @@ namespace gdom
                 "visible",
                 DirtyFlags::Layout};
 
-        //
-        // Position / size
-        //
-
         ReactiveProperty<std::string>
             left{
                 "0px",
@@ -67,9 +59,25 @@ namespace gdom
                 "0px",
                 DirtyFlags::Layout};
 
-        //
-        // Margin
-        //
+        ReactiveProperty<std::string>
+            minWidth{
+                "",
+                DirtyFlags::Layout};
+
+        ReactiveProperty<std::string>
+            maxWidth{
+                "",
+                DirtyFlags::Layout};
+
+        ReactiveProperty<std::string>
+            minHeight{
+                "",
+                DirtyFlags::Layout};
+
+        ReactiveProperty<std::string>
+            maxHeight{
+                "",
+                DirtyFlags::Layout};
 
         ReactiveProperty<std::string>
             margin{
@@ -95,10 +103,6 @@ namespace gdom
             marginLeft{
                 "",
                 DirtyFlags::Layout};
-
-        //
-        // Padding
-        //
 
         ReactiveProperty<std::string>
             padding{
@@ -130,10 +134,6 @@ namespace gdom
                 "0px",
                 DirtyFlags::Layout};
 
-        //
-        // Typography
-        //
-
         ReactiveProperty<std::string>
             fontSize{
                 "16px",
@@ -148,10 +148,6 @@ namespace gdom
             placeholderColor{
                 {150, 150, 150, 255},
                 DirtyFlags::Paint};
-
-        //
-        // Box rendering
-        //
 
         ReactiveProperty<ccColor4B>
             backgroundColor{
@@ -188,6 +184,11 @@ namespace gdom
 
             width.bind(callback);
             height.bind(callback);
+
+            minWidth.bind(callback);
+            maxWidth.bind(callback);
+            minHeight.bind(callback);
+            maxHeight.bind(callback);
 
             margin.bind(callback);
             marginTop.bind(callback);
