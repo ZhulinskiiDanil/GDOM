@@ -112,11 +112,23 @@ namespace gdom
                 ->removeChild(
                     child);
         }
-        else if (child->m_document)
+        else if (
+            child->m_document &&
+            child->m_document == m_document)
         {
             child->m_document
                 ->removeChild(
                     child);
+        }
+        else if (
+            child->m_document &&
+            child->m_document != m_document)
+        {
+            log::warn(
+                "GDOM: cannot move an element "
+                "between different documents");
+
+            return;
         }
 
         child->m_parentElement =
@@ -170,8 +182,11 @@ namespace gdom
         child->m_parentElement =
             nullptr;
 
+        //
+        // Keep ownership document after detach.
+        //
         child->setDocument(
-            nullptr);
+            m_document);
 
         child
             ->clearRenderedStateRecursive();
@@ -234,11 +249,23 @@ namespace gdom
                 ->removeChild(
                     newChild);
         }
-        else if (newChild->m_document)
+        else if (
+            newChild->m_document &&
+            newChild->m_document == m_document)
         {
             newChild->m_document
                 ->removeChild(
                     newChild);
+        }
+        else if (
+            newChild->m_document &&
+            newChild->m_document != m_document)
+        {
+            log::warn(
+                "GDOM: cannot replace with an element "
+                "owned by another document");
+
+            return false;
         }
 
         oldIterator =
@@ -270,7 +297,7 @@ namespace gdom
             nullptr;
 
         oldChild->setDocument(
-            nullptr);
+            m_document);
 
         oldChild
             ->clearRenderedStateRecursive();

@@ -4,6 +4,7 @@
 
 #include <GDOM/HTMLElement.hpp>
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -17,6 +18,8 @@ namespace gdom
     public:
         static GDOMDocument *create(
             CCNode *host);
+
+        ~GDOMDocument();
 
         HTMLElement *createElement(
             const std::string &tagName);
@@ -42,6 +45,35 @@ namespace gdom
     private:
         explicit GDOMDocument(
             CCNode *host);
+
+        template <typename T>
+        T *ownElement(
+            T *element)
+        {
+            if (!element)
+            {
+                return nullptr;
+            }
+
+            auto owned =
+                std::unique_ptr<HTMLElement>(
+                    element);
+
+            auto *raw =
+                element;
+
+            m_ownedElements.push_back(
+                std::move(
+                    owned));
+
+            raw->setDocument(
+                this);
+
+            return raw;
+        }
+
+        bool ownsElement(
+            const HTMLElement *element) const;
 
         void renderRoots();
 
@@ -76,6 +108,10 @@ namespace gdom
 
         std::vector<HTMLElement *>
             m_children;
+
+        std::vector<
+            std::unique_ptr<HTMLElement>>
+            m_ownedElements;
 
         bool m_updateRequested =
             false;
