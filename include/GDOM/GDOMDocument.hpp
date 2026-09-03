@@ -13,6 +13,8 @@ using namespace geode::prelude;
 namespace gdom
 {
 
+    class GDOMDocumentLifetimeNode;
+
     class GDOMDocument
     {
     public:
@@ -48,6 +50,11 @@ namespace gdom
     private:
         explicit GDOMDocument(
             CCNode *host);
+
+        bool attachLifetimeNode();
+
+        void handleHostDestroyed(
+            GDOMDocumentLifetimeNode *node);
 
         template <typename T>
         T *ownElement(
@@ -114,8 +121,20 @@ namespace gdom
         void clearDescendantLayoutRecursive(
             HTMLElement *element);
 
+        //
+        // Real render host supplied by the user.
+        // GDOM roots are rendered directly into this node.
+        //
         CCNode *m_host =
             nullptr;
+
+        //
+        // Invisible child used only to observe host destruction.
+        // It is NOT a render parent.
+        //
+        GDOMDocumentLifetimeNode *
+            m_lifetimeNode =
+                nullptr;
 
         std::vector<HTMLElement *>
             m_children;
@@ -131,7 +150,14 @@ namespace gdom
         bool m_updateRequested =
             false;
 
+        bool m_hostDestroyed =
+            false;
+
+        bool m_deleteQueued =
+            false;
+
         friend class HTMLElement;
+        friend class GDOMDocumentLifetimeNode;
     };
 
 }

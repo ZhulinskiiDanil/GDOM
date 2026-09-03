@@ -15,6 +15,64 @@ using namespace geode::prelude;
 namespace gdom
 {
 
+    class GDOMDocumentLifetimeNode :
+        public CCNode
+    {
+    public:
+        static GDOMDocumentLifetimeNode *create(
+            GDOMDocument *document)
+        {
+            auto *node =
+                new GDOMDocumentLifetimeNode();
+
+            if (!node)
+            {
+                return nullptr;
+            }
+
+            if (!node->init())
+            {
+                delete node;
+                return nullptr;
+            }
+
+            node->m_document =
+                document;
+
+            node->autorelease();
+
+            return node;
+        }
+
+        ~GDOMDocumentLifetimeNode() override
+        {
+            if (!m_document)
+            {
+                return;
+            }
+
+            auto *document =
+                m_document;
+
+            m_document =
+                nullptr;
+
+            document->handleHostDestroyed(
+                this);
+        }
+
+        void releaseDocument()
+        {
+            m_document =
+                nullptr;
+        }
+
+    private:
+        GDOMDocument *
+            m_document =
+                nullptr;
+    };
+
     GDOMDocument *GDOMDocument::create(
         CCNode *host)
     {
@@ -23,8 +81,22 @@ namespace gdom
             return nullptr;
         }
 
-        return new GDOMDocument(
-            host);
+        auto *document =
+            new GDOMDocument(
+                host);
+
+        if (!document)
+        {
+            return nullptr;
+        }
+
+        if (!document->attachLifetimeNode())
+        {
+            delete document;
+            return nullptr;
+        }
+
+        return document;
     }
 
     GDOMDocument::GDOMDocument(
@@ -33,20 +105,102 @@ namespace gdom
     {
     }
 
-    GDOMDocument::~GDOMDocument()
+    bool GDOMDocument::attachLifetimeNode()
     {
-        if (m_focusedElement)
+        if (!m_host)
         {
-            auto *focused =
-                m_focusedElement;
-
-            m_focusedElement =
-                nullptr;
-
-            focused->blurNative();
+            return false;
         }
 
-        removeRenderedRoots();
+        m_lifetimeNode =
+            GDOMDocumentLifetimeNode::create(
+                this);
+
+        if (!m_lifetimeNode)
+        {
+            return false;
+        }
+
+        //
+        // Lifetime observer only.
+        // Rendering continues directly into m_host.
+        //
+        m_host->addChild(
+            m_lifetimeNode);
+
+        return true;
+    }
+
+    void GDOMDocument::handleHostDestroyed(
+        GDOMDocumentLifetimeNode *node)
+    {
+        if (m_lifetimeNode != node)
+        {
+            return;
+        }
+
+        m_lifetimeNode =
+            nullptr;
+
+        m_host =
+            nullptr;
+
+        m_hostDestroyed =
+            true;
+
+        if (m_deleteQueued)
+        {
+            return;
+        }
+
+        m_deleteQueued =
+            true;
+
+        //
+        // Do NOT delete the document from the lifetime-node destructor.
+        // The host may still be in the middle of destroying TextInput
+        // cocos nodes. Those nodes can still call HTMLInputElement as
+        // their delegate, so the DOM elements must remain alive until
+        // host teardown has fully completed.
+        //
+        Loader::get()->queueInMainThread(
+            [this]()
+            {
+                delete this;
+            });
+    }
+
+    GDOMDocument::~GDOMDocument()
+    {
+        //
+        // Manual deletion happens while the host is still alive.
+        // In that case remove all native/rendered nodes before deleting
+        // HTMLElement delegates.
+        //
+        if (!m_hostDestroyed)
+        {
+            if (m_focusedElement)
+            {
+                auto *focused =
+                    m_focusedElement;
+
+                m_focusedElement =
+                    nullptr;
+
+                focused->blurNative();
+            }
+
+            removeRenderedRoots();
+        }
+        else
+        {
+            //
+            // Host teardown already destroyed native nodes.
+            // Never touch the stale rendered-node pointers here.
+            //
+            m_focusedElement =
+                nullptr;
+        }
 
         for (auto &element :
              m_ownedElements)
@@ -68,6 +222,24 @@ namespace gdom
 
         m_children.clear();
         m_ownedElements.clear();
+
+        if (m_lifetimeNode)
+        {
+            auto *node =
+                m_lifetimeNode;
+
+            m_lifetimeNode =
+                nullptr;
+
+            node->releaseDocument();
+
+            if (node->getParent())
+            {
+                node
+                    ->removeFromParentAndCleanup(
+                        true);
+            }
+        }
 
         m_host =
             nullptr;
@@ -236,9 +408,10 @@ namespace gdom
         element
             ->resetResolvedSizeRecursive();
 
-        element->m_lastFlowOffset = {
-            0.f,
-            0.f};
+        element->m_lastFlowOffset =
+            CCPoint(
+                0.f,
+                0.f);
 
         element->m_hasLastFlowOffset =
             false;
@@ -363,9 +536,10 @@ namespace gdom
         oldElement
             ->resetResolvedSizeRecursive();
 
-        oldElement->m_lastFlowOffset = {
-            0.f,
-            0.f};
+        oldElement->m_lastFlowOffset =
+            CCPoint(
+                0.f,
+                0.f);
 
         oldElement->m_hasLastFlowOffset =
             false;

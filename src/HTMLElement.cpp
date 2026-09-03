@@ -215,9 +215,10 @@ namespace gdom
         child
             ->resetResolvedSizeRecursive();
 
-        child->m_lastFlowOffset = {
-            0.f,
-            0.f};
+        child->m_lastFlowOffset =
+            CCPoint(
+                0.f,
+                0.f);
 
         child->m_hasLastFlowOffset =
             false;
@@ -354,9 +355,10 @@ namespace gdom
         oldChild
             ->resetResolvedSizeRecursive();
 
-        oldChild->m_lastFlowOffset = {
-            0.f,
-            0.f};
+        oldChild->m_lastFlowOffset =
+            CCPoint(
+                0.f,
+                0.f);
 
         oldChild->m_hasLastFlowOffset =
             false;
@@ -405,11 +407,10 @@ namespace gdom
 
     bool HTMLElement::isFocused() const
     {
-        return
-            m_document &&
-            m_document
-                ->getFocusedElement() ==
-                this;
+        return m_document &&
+               m_document
+                       ->getFocusedElement() ==
+                   this;
     }
 
     bool HTMLElement::isFocusable() const

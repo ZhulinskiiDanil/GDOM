@@ -145,434 +145,94 @@ void GDOMTestLayer::buildTestUI()
 
     if (!document)
     {
+        log::error(
+            "LIFECYCLE TEST: document create failed");
+
         return;
     }
 
-    //
-    // ROOT
-    //
-    // Важно:
-    // testArea будет находиться НЕ в (0, 0).
-    // Его позиция зависит от:
-    // padding + margin + gap + flex layout.
-    //
+    log::info(
+        "LIFECYCLE TEST: document created");
 
     auto root =
         document->createElement("div");
 
-    root->style.left = "60px";
-    root->style.top = "30px";
+    root->style.left = "80px";
+    root->style.top = "40px";
 
-    root->style.width = "430px";
-    root->style.height = "250px";
+    root->style.width = "350px";
+    root->style.height = "180px";
 
     root->style.display = "flex";
     root->style.flexDirection = "column";
 
     root->style.padding = "15px";
-    root->style.gap = "12px";
+    root->style.gap = "10px";
 
     root->style.backgroundColor = {
-        25,
-        28,
-        38,
+        35,
+        40,
+        55,
         255};
 
     root->style.borderRadius =
         "8px";
 
-    //
-    // HEADER
-    //
-    // Нужен специально, чтобы testArea
-    // получил ненулевой flowOffset.y.
-    //
+    auto input =
+        document->createElement("input");
 
-    auto header =
-        document->createElement("div");
+    input->placeholder =
+        "Focus me before closing";
 
-    header->style.width = "380px";
-    header->style.height = "35px";
-    header->style.flexShrink = 0.f;
+    input->style.width = "280px";
+    input->style.height = "36px";
+    input->style.flexShrink = 0.f;
 
-    header->style.backgroundColor = {
-        55,
-        60,
-        80,
-        255};
+    auto button =
+        document->createElement("button");
 
-    header->style.borderRadius =
-        "5px";
+    button->textContent =
+        "TEST BUTTON";
+
+    button->style.width = "140px";
+    button->style.height = "34px";
+    button->style.flexShrink = 0.f;
+
+    input->onFocus =
+        []()
+    {
+        log::info(
+            "LIFECYCLE TEST: input focus");
+    };
+
+    input->onBlur =
+        []()
+    {
+        log::info(
+            "LIFECYCLE TEST: input blur");
+    };
+
+    input->onInput =
+        [](
+            const std::string &value)
+    {
+        log::info(
+            "LIFECYCLE TEST: input '{}'",
+            value);
+    };
+
+    button->onClick =
+        []()
+    {
+        log::info(
+            "LIFECYCLE TEST: button works");
+    };
 
     root->appendChild(
-        header);
-
-    //
-    // TEST AREA
-    //
-    // Именно этот элемент должен локально
-    // rerender-иться при изменениях внутри.
-    //
-
-    auto testArea =
-        document->createElement("div");
-
-    testArea->style.width = "380px";
-    testArea->style.height = "100px";
-
-    testArea->style.marginLeft =
-        "8px";
-
-    testArea->style.flexShrink =
-        0.f;
-
-    testArea->style.display =
-        "flex";
-
-    testArea->style.flexDirection =
-        "row";
-
-    testArea->style.alignItems =
-        "center";
-
-    testArea->style.gap =
-        "10px";
-
-    testArea->style.padding =
-        "10px";
-
-    testArea->style.backgroundColor = {
-        40,
-        45,
-        60,
-        255};
-
-    testArea->style.borderRadius =
-        "6px";
-
-    //
-    // BOX A
-    //
-
-    auto boxA =
-        document->createElement("div");
-
-    boxA->style.width = "70px";
-    boxA->style.height = "50px";
-    boxA->style.flexShrink = 0.f;
-
-    boxA->style.backgroundColor = {
-        180,
-        80,
-        80,
-        255};
-
-    boxA->style.borderRadius =
-        "5px";
-
-    //
-    // BOX B
-    //
-
-    auto boxB =
-        document->createElement("div");
-
-    boxB->style.width = "70px";
-    boxB->style.height = "50px";
-    boxB->style.flexShrink = 0.f;
-
-    boxB->style.backgroundColor = {
-        80,
-        150,
-        220,
-        255};
-
-    boxB->style.borderRadius =
-        "5px";
-
-    testArea->appendChild(
-        boxA);
-
-    testArea->appendChild(
-        boxB);
+        input);
 
     root->appendChild(
-        testArea);
-
-    //
-    // BUTTON ROW
-    //
-
-    auto buttons =
-        document->createElement("div");
-
-    buttons->style.width = "390px";
-    buttons->style.height = "32px";
-
-    buttons->style.display =
-        "flex";
-
-    buttons->style.flexDirection =
-        "row";
-
-    buttons->style.gap =
-        "5px";
-
-    buttons->style.flexShrink =
-        0.f;
-
-    //
-    // WIDTH
-    //
-
-    auto widthButton =
-        document->createElement("button");
-
-    widthButton->textContent =
-        "WIDTH";
-
-    widthButton->style.width =
-        "75px";
-
-    widthButton->style.height =
-        "32px";
-
-    widthButton->style.flexShrink =
-        0.f;
-
-    //
-    // HEIGHT
-    //
-
-    auto heightButton =
-        document->createElement("button");
-
-    heightButton->textContent =
-        "HEIGHT";
-
-    heightButton->style.width =
-        "75px";
-
-    heightButton->style.height =
-        "32px";
-
-    heightButton->style.flexShrink =
-        0.f;
-
-    //
-    // GAP
-    //
-
-    auto gapButton =
-        document->createElement("button");
-
-    gapButton->textContent =
-        "GAP";
-
-    gapButton->style.width =
-        "70px";
-
-    gapButton->style.height =
-        "32px";
-
-    gapButton->style.flexShrink =
-        0.f;
-
-    //
-    // ALIGN
-    //
-
-    auto alignButton =
-        document->createElement("button");
-
-    alignButton->textContent =
-        "ALIGN";
-
-    alignButton->style.width =
-        "70px";
-
-    alignButton->style.height =
-        "32px";
-
-    alignButton->style.flexShrink =
-        0.f;
-
-    //
-    // RESET
-    //
-
-    auto resetButton =
-        document->createElement("button");
-
-    resetButton->textContent =
-        "RESET";
-
-    resetButton->style.width =
-        "75px";
-
-    resetButton->style.height =
-        "32px";
-
-    resetButton->style.flexShrink =
-        0.f;
-
-    buttons->appendChild(
-        widthButton);
-
-    buttons->appendChild(
-        heightButton);
-
-    buttons->appendChild(
-        gapButton);
-
-    buttons->appendChild(
-        alignButton);
-
-    buttons->appendChild(
-        resetButton);
-
-    root->appendChild(
-        buttons);
-
-    //
-    // EVENTS
-    //
-
-    bool wide =
-        false;
-
-    widthButton->onClick =
-        [document,
-         boxA,
-         &wide]()
-    {
-        wide =
-            !wide;
-
-        boxA->style.width =
-            wide
-                ? "140px"
-                : "70px";
-
-        log::info(
-            "PARTIAL TEST: width -> {}",
-            wide
-                ? 140
-                : 70);
-
-        document->update();
-    };
-
-    bool tall =
-        false;
-
-    heightButton->onClick =
-        [document,
-         boxA,
-         &tall]()
-    {
-        tall =
-            !tall;
-
-        boxA->style.height =
-            tall
-                ? "75px"
-                : "50px";
-
-        log::info(
-            "PARTIAL TEST: height -> {}",
-            tall
-                ? 75
-                : 50);
-
-        document->update();
-    };
-
-    bool largeGap =
-        false;
-
-    gapButton->onClick =
-        [document,
-         testArea,
-         &largeGap]()
-    {
-        largeGap =
-            !largeGap;
-
-        testArea->style.gap =
-            largeGap
-                ? "35px"
-                : "10px";
-
-        log::info(
-            "PARTIAL TEST: gap changed");
-
-        document->update();
-    };
-
-    bool centered =
-        false;
-
-    alignButton->onClick =
-        [document,
-         testArea,
-         &centered]()
-    {
-        centered =
-            !centered;
-
-        testArea->style.justifyContent =
-            centered
-                ? "center"
-                : "flex-start";
-
-        log::info(
-            "PARTIAL TEST: justify -> {}",
-            centered
-                ? "center"
-                : "flex-start");
-
-        document->update();
-    };
-
-    resetButton->onClick =
-        [document,
-         boxA,
-         testArea,
-         &wide,
-         &tall,
-         &largeGap,
-         &centered]()
-    {
-        wide =
-            false;
-
-        tall =
-            false;
-
-        largeGap =
-            false;
-
-        centered =
-            false;
-
-        boxA->style.width =
-            "70px";
-
-        boxA->style.height =
-            "50px";
-
-        testArea->style.gap =
-            "10px";
-
-        testArea->style.justifyContent =
-            "flex-start";
-
-        log::info(
-            "PARTIAL TEST: reset");
-
-        document->update();
-    };
+        button);
 
     document->appendChild(
         root);
@@ -580,5 +240,5 @@ void GDOMTestLayer::buildTestUI()
     document->render();
 
     log::info(
-        "PARTIAL TEST: ready");
+        "LIFECYCLE TEST: rendered");
 }
