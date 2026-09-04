@@ -2,6 +2,8 @@
 
 #include <Geode/Geode.hpp>
 
+#include "Export.hpp"
+
 #include "Style.hpp"
 #include "DirtyFlags.hpp"
 #include "ReactiveProperty.hpp"
@@ -16,6 +18,8 @@ namespace gdom
 {
 
     class GDOMDocument;
+
+    class GDOM_API HTMLElement;
 
     namespace layout
     {

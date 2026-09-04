@@ -9,11 +9,18 @@ file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
     src/*.cpp
 )
 
-add_library(${PROJECT_NAME} SHARED ${SOURCES})
+add_library(${PROJECT_NAME} SHARED
+    ${SOURCES}
+)
 
 target_include_directories(${PROJECT_NAME}
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_compile_definitions(${PROJECT_NAME}
+    PRIVATE
+        ZHULISS_GDOM_EXPORTING
 )
 
 if (NOT DEFINED ENV{GEODE_SDK})

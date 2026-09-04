@@ -2,6 +2,7 @@
 
 #include <Geode/Geode.hpp>
 
+#include "Export.hpp"
 #include "HTMLElement.hpp"
 
 #include <memory>
@@ -15,13 +16,29 @@ namespace gdom
 
     class GDOMDocumentLifetimeNode;
 
-    class GDOMDocument
+    class GDOM_API GDOMDocument
     {
     public:
         static GDOMDocument *create(
             CCNode *host);
 
         ~GDOMDocument();
+
+        GDOMDocument(
+            const GDOMDocument &) =
+            delete;
+
+        GDOMDocument &operator=(
+            const GDOMDocument &) =
+            delete;
+
+        GDOMDocument(
+            GDOMDocument &&) =
+            delete;
+
+        GDOMDocument &operator=(
+            GDOMDocument &&) =
+            delete;
 
         HTMLElement *createElement(
             const std::string &tagName);
