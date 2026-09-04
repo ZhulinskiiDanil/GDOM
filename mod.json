@@ -1,5 +1,5 @@
 {
-  "geode": "5.8.2",
+  "geode": "5.10.1",
   "gd": {
     "win": "2.2081",
     "android": "2.2081",
@@ -8,7 +8,7 @@
   },
   "id": "zhuliss.gdom",
   "name": "GDOM",
-  "version": "v0.1.0",
+  "version": "v0.1.0-beta.1",
   "developer": "Zhuliss",
   "description": "DOM-like UI framework for Geode mods.",
   "api": {
