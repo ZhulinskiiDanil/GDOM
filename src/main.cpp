@@ -13,7 +13,7 @@ namespace
     public:
         static GDOMTestButtonTarget *create()
         {
-            auto target =
+            auto *target =
                 new GDOMTestButtonTarget();
 
             if (!target)
@@ -50,7 +50,13 @@ class $modify(MenuLayer)
             return false;
         }
 
-        auto sprite =
+        if (!Mod::get()->getSettingValue<bool>(
+                "show-test-button"))
+        {
+            return true;
+        }
+
+        auto *sprite =
             ButtonSprite::create(
                 "GDOM");
 
@@ -59,7 +65,7 @@ class $modify(MenuLayer)
             return true;
         }
 
-        auto target =
+        auto *target =
             GDOMTestButtonTarget::create();
 
         if (!target)
@@ -67,7 +73,7 @@ class $modify(MenuLayer)
             return true;
         }
 
-        auto button =
+        auto *button =
             CCMenuItemSpriteExtra::create(
                 sprite,
                 target,
@@ -79,7 +85,7 @@ class $modify(MenuLayer)
             return true;
         }
 
-        auto menu =
+        auto *menu =
             CCMenu::create();
 
         if (!menu)
@@ -87,11 +93,15 @@ class $modify(MenuLayer)
             return true;
         }
 
-        menu->setPosition({0.f,
-                           0.f});
+        menu->setPosition(
+            CCPoint(
+                0.f,
+                0.f));
 
-        button->setPosition({75.f,
-                             30.f});
+        button->setPosition(
+            CCPoint(
+                75.f,
+                30.f));
 
         menu->addChild(
             button);

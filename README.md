@@ -1,410 +1,389 @@
 # GDOM
 
-GDOM is a DOM-inspired UI and layout layer for Geometry Dash mods built with Geode.
+A minimal DOM-like UI layer for Geometry Dash mods built with [Geode](https://geode-sdk.org/).
 
-It provides a web-like way to build cocos2d interfaces using nested elements and CSS-inspired styles.
+GDOM provides a small HTML/CSS-inspired API on top of cocos2d, with DOM-style elements, reactive styles, block and flex layouts, inputs, focus handling, mutations, and partial re-rendering.
 
-Instead of manually calculating positions:
+> GDOM is intended for mod developers. It is not a browser DOM implementation and does not aim to implement the full CSS specification.
 
-```cpp
-node->setPosition(...);
-```
+## Status
 
-GDOM allows you to describe layout through styles:
+GDOM is currently in early development.
 
-```cpp
-auto document =
-    gdom::GDOMDocument::create(this);
+Target environment:
 
-auto container =
-    document->createElement("div");
-
-container->style.width = "300px";
-container->style.height = "auto";
-
-container->style.padding = "20px";
-container->style.gap = "10px";
-
-document->appendChild(container);
-document->render();
-```
-
-> GDOM is currently an experimental MVP.
+- Geode `5.x`
+- Geometry Dash `2.2081`
+- C++23
 
 ## Features
 
-Current GDOM MVP supports:
-
-- DOM-like element tree
-- `div`
-- nested elements
-- top-left DOM-like coordinates
-- block layout
-- flex layout
-- `row`
-- `column`
+- DOM-like document and element tree
+- `div`, `span`, `button`, and `input` elements
+- Reactive style properties
+- Block layout
+- Flex row / column layout
+- `flexGrow` and `flexShrink`
 - `justifyContent`
 - `alignItems`
 - `gap`
-- `margin`
-- `padding`
-- CSS-like spacing shorthand
-- per-side spacing overrides
-- `px`
-- `%`
-- `rem`
-- `width: auto`
-- `height: auto`
-- automatic nested layout
-- CSS-inspired string style API
+- Margin and padding
+- Width / height
+- Min / max sizes
+- `px`, `%`, `rem`, and `calc(...)`
+- Background, border, radius, text color and font size
+- `display: none`
+- Vertical `overflow: auto` / `scroll`
+- DOM mutations: `appendChild`, `removeChild`, `replaceChild`, and reparenting
+- Button click events
+- Input events
+- Native Geode `TextInput`
+- `focus()` / `blur()`
+- `onFocus` / `onBlur`
+- Partial layout re-rendering
+- Document-owned element lifetime management
 
-Example:
-
-```cpp
-wrapper->style.display = "flex";
-wrapper->style.flexDirection = "row";
-
-wrapper->style.justifyContent =
-    "space-between";
-
-wrapper->style.alignItems =
-    "center";
-
-wrapper->style.padding =
-    "20px 30px";
-```
-
-## Requirements
-
-- Geode 5.8.2
-- Geometry Dash 2.2081
-- Current Geode C++ toolchain
-
-## Example
+## Basic Example
 
 ```cpp
-#include <Geode/Geode.hpp>
-#include <Geode/modify/MenuLayer.hpp>
-
 #include <GDOM/GDOMDocument.hpp>
 
-using namespace geode::prelude;
+auto document =
+    gdom::GDOMDocument::create(this);
 
-class $modify(MenuLayer)
-{
-    bool init()
-    {
-        if (!MenuLayer::init())
-        {
-            return false;
-        }
+auto root =
+    document->createElement("div");
 
-        auto document =
-            gdom::GDOMDocument::create(this);
+root->style.left = "40px";
+root->style.top = "40px";
+root->style.width = "400px";
+root->style.height = "220px";
 
-        auto wrapper =
-            document->createElement("div");
+root->style.display = "flex";
+root->style.flexDirection = "column";
+root->style.gap = "10px";
+root->style.padding = "16px";
 
-        wrapper->style.left = "100px";
-        wrapper->style.top = "50px";
-
-        wrapper->style.width = "350px";
-        wrapper->style.height = "160px";
-
-        wrapper->style.display = "flex";
-        wrapper->style.flexDirection = "row";
-
-        wrapper->style.justifyContent =
-            "space-between";
-
-        wrapper->style.alignItems =
-            "center";
-
-        wrapper->style.padding =
-            "20px 30px";
-
-        wrapper->style.backgroundColor = {
-            255,
-            0,
-            0,
-            180
-        };
-
-        auto first =
-            document->createElement("div");
-
-        first->style.width = "60px";
-        first->style.height = "60px";
-
-        first->style.backgroundColor = {
-            0,
-            255,
-            0,
-            255
-        };
-
-        auto second =
-            document->createElement("div");
-
-        second->style.width = "60px";
-        second->style.height = "60px";
-
-        second->style.backgroundColor = {
-            0,
-            100,
-            255,
-            255
-        };
-
-        wrapper->appendChild(first);
-        wrapper->appendChild(second);
-
-        document->appendChild(wrapper);
-        document->render();
-
-        return true;
-    }
+root->style.backgroundColor = {
+    30,
+    34,
+    46,
+    255
 };
+
+root->style.borderRadius = "8px";
+
+auto title =
+    document->createElement("span");
+
+title->textContent =
+    "Hello from GDOM";
+
+title->style.width = "auto";
+title->style.height = "auto";
+title->style.fontSize = "14px";
+title->style.flexShrink = 0.f;
+
+auto button =
+    document->createElement("button");
+
+button->textContent =
+    "Click me";
+
+button->style.width = "120px";
+button->style.height = "36px";
+button->style.flexShrink = 0.f;
+
+button->onClick =
+    []()
+{
+    geode::log::info(
+        "GDOM button clicked");
+};
+
+root->appendChild(title);
+root->appendChild(button);
+
+document->appendChild(root);
+document->render();
 ```
 
-## CSS-inspired API
+## Creating Elements
 
-GDOM intentionally uses a style API similar to JavaScript DOM styles.
-
-JavaScript:
-
-```js
-block.style.width = "100%";
-block.style.height = "auto";
-block.style.display = "flex";
-block.style.flexDirection = "column";
-block.style.padding = "20px";
-```
-
-GDOM:
+Elements are created through `GDOMDocument`:
 
 ```cpp
-block->style.width = "100%";
-block->style.height = "auto";
-block->style.display = "flex";
-block->style.flexDirection = "column";
-block->style.padding = "20px";
+auto div =
+    document->createElement("div");
+
+auto span =
+    document->createElement("span");
+
+auto button =
+    document->createElement("button");
+
+auto input =
+    document->createElement("input");
 ```
 
-## Supported length units
+The document owns created elements for its lifetime.
 
-```text
-px
-%
-rem
-auto
-```
+The public API uses raw pointers for convenience, but callers should not manually delete individual `HTMLElement` instances.
 
-Examples:
+## Styling
+
+Styles are assigned directly:
 
 ```cpp
-block->style.width = "300px";
-block->style.width = "50%";
+element->style.width = "100%";
+element->style.height = "48px";
 
-block->style.padding = "2rem";
+element->style.margin = "8px";
+element->style.padding = "12px";
 
-block->style.height = "auto";
+element->style.backgroundColor = {
+    40,
+    45,
+    60,
+    255
+};
+
+element->style.borderColor = {
+    255,
+    255,
+    255,
+    80
+};
+
+element->style.borderWidth = "1px";
+element->style.borderRadius = "6px";
 ```
 
-Current MVP definition:
+Most style changes are reactive.
 
-```text
-1rem = 10 cocos2d units
+After changing styles at runtime, call:
+
+```cpp
+document->update();
 ```
 
-## Flexbox
+GDOM will apply paint-only updates when possible and perform layout re-rendering when required.
 
-Enable flex layout:
+## Lengths
+
+Supported length syntax includes:
+
+```cpp
+element->style.width = "120px";
+element->style.width = "50%";
+element->style.width = "2rem";
+
+element->style.width =
+    "calc(100% - 20px)";
+```
+
+`calc(...)` currently focuses on addition and subtraction of supported length values. Full CSS math is not implemented.
+
+## Flex Layout
 
 ```cpp
 container->style.display = "flex";
+container->style.flexDirection = "row";
+container->style.justifyContent = "space-between";
+container->style.alignItems = "center";
+container->style.gap = "8px";
 ```
 
-Supported `flexDirection`:
-
-```text
-row
-column
-```
-
-Supported `justifyContent`:
-
-```text
-flex-start
-center
-flex-end
-space-between
-space-around
-space-evenly
-```
-
-Supported `alignItems`:
-
-```text
-flex-start
-center
-flex-end
-```
-
-## Spacing shorthand
-
-GDOM supports CSS-like shorthand values.
+Children may use:
 
 ```cpp
-style.padding = "10px";
+child->style.flexGrow = 1.f;
+child->style.flexShrink = 0.f;
 ```
+
+## Input
+
+GDOM inputs use Geode's native `TextInput` internally.
 
 ```cpp
-style.padding = "10px 20px";
+auto input =
+    document->createElement("input");
+
+input->placeholder =
+    "Enter text";
+
+input->style.width = "260px";
+input->style.height = "36px";
+
+input->onInput =
+    [](
+        const std::string& value)
+{
+    geode::log::info(
+        "Input: {}",
+        value);
+};
 ```
+
+Programmatic focus:
 
 ```cpp
-style.padding = "10px 20px 30px";
+input->focus();
+input->blur();
+
+if (input->isFocused())
+{
+    // ...
+}
 ```
+
+Focus events:
 
 ```cpp
-style.padding =
-    "10px 20px 30px 40px";
+input->onFocus =
+    []()
+{
+    geode::log::info("Focused");
+};
+
+input->onBlur =
+    []()
+{
+    geode::log::info("Blurred");
+};
 ```
 
-The same syntax works for margin:
+The currently focused element can be queried with:
 
 ```cpp
-style.margin = "10px 20px";
+auto focused =
+    document->getFocusedElement();
 ```
 
-Specific sides may override shorthand values:
+## DOM Mutations
 
 ```cpp
-style.margin = "10px";
-style.marginLeft = "30px";
+parent->appendChild(child);
+
+parent->removeChild(child);
+
+parent->replaceChild(
+    newChild,
+    oldChild);
 ```
 
-## Documentation
+Appending an existing child to another parent reparents it automatically.
 
-Full documentation is available in [`docs/`](docs/README.md).
+Moving elements between different `GDOMDocument` instances is not supported.
 
-Topics:
-
-- [Getting Started](docs/getting-started.md)
-- [Elements](docs/elements.md)
-- [Sizing](docs/sizing.md)
-- [Spacing](docs/spacing.md)
-- [Block Layout](docs/block-layout.md)
-- [Flex Layout](docs/flex-layout.md)
-- [Architecture](docs/architecture.md)
-- [Geode Guidelines](docs/geode-guidelines.md)
-- [Roadmap](docs/roadmap.md)
-
-## Architecture
-
-Current internal structure:
-
-```text
-GDOMDocument
-│
-└── HTMLElement
-    │
-    └── HTMLDivElement
-
-Layout
-├── BlockLayout
-└── FlexLayout
-
-Resolvers
-├── LengthResolver
-└── BoxResolver
-```
-
-Layout calculation is separated from element rendering so the engine can be extended without turning `HTMLElement` into a large monolithic class.
-
-## Geode Guidelines
-
-GDOM avoids exception-based numeric parsing such as:
+## `display: none`
 
 ```cpp
-std::stof(...)
-std::stoi(...)
+element->style.display =
+    "none";
+
+document->update();
 ```
 
-and uses Geode-compatible result-based parsing instead.
+To show it again:
 
-The repository also contains:
+```cpp
+element->style.display =
+    "block";
 
-```text
-scripts/check-geode-guidelines.py
+document->update();
 ```
 
-Run:
+## Partial Re-rendering
+
+GDOM tracks layout dirtiness and attempts to re-render the smallest safe layout boundary instead of rebuilding the entire document.
+
+Layout contexts such as the resolved flow offset are preserved during rendering so local re-renders can keep their correct position inside block and flex layouts.
+
+When GDOM cannot safely perform a local re-render, it may fall back to rendering a larger boundary or the document root.
+
+## Document Lifetime
+
+Create a document with:
+
+```cpp
+auto document =
+    gdom::GDOMDocument::create(host);
+```
+
+The document is tied to its host lifetime.
+
+Created elements are owned by the document and are released together with it.
+
+Do not manually delete individual GDOM elements.
+
+## Building
+
+Clone the repository:
 
 ```bash
-python scripts/check-geode-guidelines.py
+git clone https://github.com/zhuliss/gdom.git
+cd gdom
 ```
 
-before builds or commits.
+Configure and build using your Geode development environment:
 
-## Roadmap
+```bash
+cmake -B build
+cmake --build build --config Release
+```
 
-Near-term:
+A clean rebuild is recommended after changing public GDOM headers that alter class layouts.
+
+## Using GDOM as a Dependency
+
+GDOM is designed to be used as a developer dependency by other Geode mods.
+
+The public headers are located under:
 
 ```text
-[ ] span / text
-[ ] button
-[ ] event listeners
-[ ] min-width / max-width
-[ ] min-height / max-height
-[ ] safer ownership and lifetime management
-[ ] rerender / update API
-[ ] flex-grow
-[ ] flex-shrink
+include/GDOM/
 ```
 
-Possible later features:
+The intended entry points are:
 
-```text
-[ ] flex-wrap
-[ ] overflow / clipping
-[ ] absolute positioning
-[ ] grid
-[ ] CSS classes
-[ ] selectors
-[ ] stylesheet parser
-[ ] HTML-like markup
-[ ] components
-[ ] transitions / animations
+```cpp
+#include <GDOM/GDOMDocument.hpp>
+#include <GDOM/HTMLElement.hpp>
 ```
+
+Dependency packaging and stable API guarantees are still being finalized for the first public releases.
 
 ## Scope
 
-GDOM is not intended to implement a complete browser engine or the entire CSS specification.
+GDOM intentionally does not currently implement:
 
-The goal is to provide a practical DOM/CSS-inspired layout system for Geode mods.
+- CSS selectors
+- stylesheets
+- CSS cascade
+- grid layout
+- animations
+- transforms
+- full browser event propagation
+- full CSS sizing behavior
+- the complete CSS `calc()` grammar
+- a browser-compatible DOM
 
-## Project
+The goal is a compact UI abstraction suitable for Geometry Dash mods, not a web engine.
 
-**ID**
+## Reporting Issues
 
-```text
-zhuliss.gdom
-```
+If you find a crash, incorrect layout, rendering issue, or API bug, please open an issue on the GitHub repository and include:
 
-**Developer**
+- GDOM version
+- Geode version
+- Geometry Dash version
+- platform
+- minimal reproduction code
+- crash log, if applicable
 
-```text
-Zhuliss
-```
+## Contributing
 
-**Version**
+Contributions and bug reports are welcome.
 
-```text
-v0.1.0
-```
-
-**Source**
-
-https://github.com/zhuliss/gdom
+When changing layout or rendering behavior, keep changes focused and include a small reproduction or regression test where possible.

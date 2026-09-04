@@ -10,8 +10,31 @@
   "name": "GDOM",
   "version": "v0.1.0",
   "developer": "Zhuliss",
-  "description": "Minimal DOM-like UI layer for Geode.",
+  "description": "DOM-like UI framework for Geode mods.",
+  "api": {
+    "include": [
+      "include/GDOM/*.hpp",
+      "include/GDOM/layout/*.hpp"
+    ]
+  },
+  "tags": [
+    "developer",
+    "api",
+    "offline"
+  ],
   "links": {
     "source": "https://github.com/zhuliss/gdom"
+  },
+  "issues": {
+    "url": "https://github.com/zhuliss/gdom/issues",
+    "info": "Report crashes, layout issues, and API bugs on the GitHub issues page."
+  },
+  "settings": {
+    "show-test-button": {
+      "name": "Show GDOM Test Button",
+      "description": "Shows the GDOM test button on the main menu.",
+      "type": "bool",
+      "default": false
+    }
   }
 }
