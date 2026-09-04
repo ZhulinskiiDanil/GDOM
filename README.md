@@ -312,7 +312,7 @@ Do not manually delete individual GDOM elements.
 Clone the repository:
 
 ```bash
-git clone https://github.com/zhuliss/gdom.git
+git clone https://github.com/ZhulinskiiDanil/gdom.git
 cd gdom
 ```
 

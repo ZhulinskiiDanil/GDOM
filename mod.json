@@ -6,10 +6,10 @@
     "mac": "2.2081",
     "ios": "2.2081"
   },
-  "id": "zhuliss.gdom",
+  "id": "zhulis.gdom",
   "name": "GDOM",
   "version": "v0.1.0-beta.1",
-  "developer": "Zhuliss",
+  "developer": "Zhulis",
   "description": "DOM-like UI framework for Geode mods.",
   "api": {
     "include": [
@@ -23,10 +23,10 @@
     "offline"
   ],
   "links": {
-    "source": "https://github.com/zhuliss/gdom"
+    "source": "https://github.com/ZhulinskiiDanil/gdom"
   },
   "issues": {
-    "url": "https://github.com/zhuliss/gdom/issues",
+    "url": "https://github.com/ZhulinskiiDanil/gdom/issues",
     "info": "Report crashes, layout issues, and API bugs on the GitHub issues page."
   },
   "settings": {

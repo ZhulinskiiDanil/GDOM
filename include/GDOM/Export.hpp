@@ -2,7 +2,7 @@
 
 #if defined(_WIN32)
 
-#ifdef ZHULISS_GDOM_EXPORTING
+#ifdef ZHULIS_GDOM_EXPORTING
 #define GDOM_API __declspec(dllexport)
 #else
 #define GDOM_API __declspec(dllimport)

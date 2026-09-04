@@ -20,7 +20,7 @@ target_include_directories(${PROJECT_NAME}
 
 target_compile_definitions(${PROJECT_NAME}
     PRIVATE
-        ZHULISS_GDOM_EXPORTING
+        ZHULIS_GDOM_EXPORTING
 )
 
 if (NOT DEFINED ENV{GEODE_SDK})

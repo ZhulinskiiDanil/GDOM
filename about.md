@@ -30,14 +30,14 @@ Add GDOM as a dependency:
 
 ```json
 "dependencies": {
-  "zhuliss.gdom": ">=v0.1.0-beta.1"
+  "zhulis.gdom": ">=v0.1.0-beta.1"
 }
 ```
 
 Then include the public API:
 
 ```cpp
-#include <zhuliss.gdom/include/GDOM/GDOMDocument.hpp>
+#include <zhulis.gdom/include/GDOM/GDOMDocument.hpp>
 ```
 
 Create a document and UI:
