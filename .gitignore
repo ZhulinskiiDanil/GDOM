@@ -1,14 +1,48 @@
-# Build
-build/
-out/
-dist/
+# Prerequisites
+*.d
+
+# Compiled object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled headers
+*.gch
+*.pch
+
+# Compiled dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
 
 # Geode build artifacts
 *.geode
-*.dll
 *.pdb
-*.lib
 *.exp
+
+# Build directories
+build/
+**/build/
+build-*/
+cmake-build-*/
+out/
+dist/
 
 # CMake
 CMakeCache.txt
@@ -19,21 +53,35 @@ compile_commands.json
 .ninja_*
 build.ninja
 
-# IDE
+# macOS / OS files
+.DS_Store
+**/.DS_Store
+Thumbs.db
+desktop.ini
+
+# Sublime Text
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+*.sublime-workspace
+
+# VS Code
 .vscode/
-.idea/
-.vs/
+**/.vscode
+.history/
+
+# clangd
+.cache/
 
 # Visual Studio
+.vs/
 *.sln
 *.vcxproj
 *.vcxproj.filters
 *.vcxproj.user
 
-# OS
-.DS_Store
-Thumbs.db
-desktop.ini
+# CLion / JetBrains
+.idea/
 
 # Logs
 *.log
@@ -53,5 +101,5 @@ __pycache__/
 .env.*
 !.env.example
 
-# Scripts
+# Local scripts
 scripts/
