@@ -2,32 +2,47 @@
 
 GDOM is a **DOM-like UI framework for Geode mods**.
 
-It provides a small HTML/CSS-inspired API on top of cocos2d so mod developers can build interfaces using elements, layout rules, reactive styles, inputs, and DOM-style mutations instead of positioning every node manually.
+It provides a small HTML/CSS-inspired API on top of cocos2d, allowing mod developers to build interfaces with familiar elements, layouts, styles, inputs, and DOM-style mutations instead of manually positioning every node.
 
-## What GDOM provides
+## Features
 
 - `div`, `span`, `button`, and `input` elements
 - block and flex layouts
-- `flexGrow` / `flexShrink`
-- `justifyContent` / `alignItems`
+- `flexGrow` and `flexShrink`
+- `justifyContent` and `alignItems`
 - margin, padding, and `gap`
-- fixed, percentage, `rem`, and `calc(...)` lengths
+- `px`, `%`, `rem`, and `calc(...)` lengths
 - background colors, borders, and border radius
 - `display: none`
-- vertical scrolling with `overflow: auto` / `scroll`
+- vertical `overflow: auto` / `scroll`
 - click and input events
 - native Geode `TextInput`
-- `focus()` / `blur()` and focus events
+- `focus()` / `blur()`
+- `onFocus` / `onBlur`
 - `appendChild`, `removeChild`, `replaceChild`, and reparenting
-- reactive paint and layout updates
+- reactive style updates
 - partial layout re-rendering
-- document-owned element lifetime management
+- document-owned element lifetime
 
 ## Example
 
-```cpp
-#include <GDOM/GDOMDocument.hpp>
+Add GDOM as a dependency:
 
+```json
+"dependencies": {
+  "zhuliss.gdom": ">=v0.1.0-beta.1"
+}
+```
+
+Then include the public API:
+
+```cpp
+#include <zhuliss.gdom/include/GDOM/GDOMDocument.hpp>
+```
+
+Create a document and UI:
+
+```cpp
 auto document =
     gdom::GDOMDocument::create(this);
 
@@ -36,8 +51,10 @@ auto root =
 
 root->style.width = "100%";
 root->style.height = "100%";
+
 root->style.display = "flex";
 root->style.flexDirection = "column";
+
 root->style.gap = "10px";
 root->style.padding = "16px";
 
@@ -56,7 +73,8 @@ button->textContent =
 button->onClick =
     []()
 {
-    geode::log::info("Clicked!");
+    geode::log::info(
+        "Clicked!");
 };
 
 root->appendChild(title);
@@ -66,10 +84,12 @@ document->appendChild(root);
 document->render();
 ```
 
-Runtime style changes are reactive. Call `document->update()` after changing properties:
+Runtime style changes are reactive:
 
 ```cpp
-button->style.width = "180px";
+button->style.width =
+    "180px";
+
 button->style.backgroundColor = {
     80,
     150,
@@ -82,7 +102,7 @@ document->update();
 
 ## Inputs
 
-GDOM inputs use Geode's native `TextInput` internally:
+GDOM inputs use Geode's native `TextInput` internally.
 
 ```cpp
 auto input =
@@ -92,36 +112,25 @@ input->placeholder =
     "Enter text";
 
 input->onInput =
-    [](const std::string& value)
+    [](
+        const std::string &value)
 {
-    geode::log::info("{}", value);
+    geode::log::info(
+        "{}",
+        value);
 };
 
 input->onFocus =
     []()
 {
-    geode::log::info("Focused");
+    geode::log::info(
+        "Focused");
 };
 
 input->onBlur =
     []()
 {
-    geode::log::info("Blurred");
+    geode::log::info(
+        "Blurred");
 };
 ```
-
-## Scope
-
-GDOM is intentionally **not** a browser engine.
-
-It currently does not implement CSS selectors, stylesheets, the CSS cascade, Grid, animations, transforms, full browser event propagation, or the complete CSS specification.
-
-The goal is to provide a compact and familiar UI abstraction specifically for Geometry Dash / Geode mod development.
-
-## Early release
-
-GDOM `v0.1.0` is the first public release.
-
-The API is usable, but it is still early and may change in future versions.
-
-If you find a crash, layout issue, or API bug, please report it through the GitHub issue tracker.

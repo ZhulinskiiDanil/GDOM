@@ -1,20 +1,10 @@
 # GDOM
 
-A minimal DOM-like UI layer for Geometry Dash mods built with [Geode](https://geode-sdk.org/).
+A minimal DOM-like UI framework for Geometry Dash mods built with [Geode](https://geode-sdk.org/).
 
-GDOM provides a small HTML/CSS-inspired API on top of cocos2d, with DOM-style elements, reactive styles, block and flex layouts, inputs, focus handling, mutations, and partial re-rendering.
+GDOM provides an HTML/CSS-inspired API on top of cocos2d, with DOM-style elements, reactive styles, block and flex layouts, inputs, focus handling, mutations, and partial re-rendering.
 
 > GDOM is intended for mod developers. It is not a browser DOM implementation and does not aim to implement the full CSS specification.
-
-## Status
-
-GDOM is currently in early development.
-
-Target environment:
-
-- Geode `5.x`
-- Geometry Dash `2.2081`
-- C++23
 
 ## Features
 
