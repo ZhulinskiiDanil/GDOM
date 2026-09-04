@@ -2,9 +2,9 @@
 
 #include <Geode/Geode.hpp>
 
-#include <GDOM/Style.hpp>
-#include <GDOM/DirtyFlags.hpp>
-#include <GDOM/ReactiveProperty.hpp>
+#include "Style.hpp"
+#include "DirtyFlags.hpp"
+#include "ReactiveProperty.hpp"
 
 #include <functional>
 #include <string>

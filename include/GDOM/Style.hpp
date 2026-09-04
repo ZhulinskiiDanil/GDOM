@@ -2,7 +2,7 @@
 
 #include <Geode/Geode.hpp>
 
-#include <GDOM/ReactiveProperty.hpp>
+#include "ReactiveProperty.hpp"
 
 #include <functional>
 #include <string>

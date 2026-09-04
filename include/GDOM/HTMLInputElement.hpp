@@ -1,6 +1,6 @@
 #pragma once
 
-#include <GDOM/HTMLElement.hpp>
+#include "HTMLElement.hpp"
 
 #include <Geode/binding/TextInputDelegate.hpp>
 

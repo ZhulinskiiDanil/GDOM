@@ -2,7 +2,7 @@
 
 #include <Geode/Geode.hpp>
 
-#include <GDOM/HTMLElement.hpp>
+#include "HTMLElement.hpp"
 
 #include <memory>
 #include <string>

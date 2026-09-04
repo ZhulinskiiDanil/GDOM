@@ -3,7 +3,7 @@
 #include <functional>
 #include <utility>
 
-#include <GDOM/DirtyFlags.hpp>
+#include "DirtyFlags.hpp"
 
 namespace gdom
 {
